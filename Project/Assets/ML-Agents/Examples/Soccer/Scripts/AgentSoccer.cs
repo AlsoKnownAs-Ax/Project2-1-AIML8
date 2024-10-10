@@ -11,14 +11,6 @@ public enum Team
 
 public class AgentSoccer : Agent
 {
-    // Note that that the detectable tags are different for the blue and purple teams. The order is
-    // * ball
-    // * own goal
-    // * opposing goal
-    // * wall
-    // * own teammate
-    // * opposing player
-
     public enum Position
     {
         Striker,
@@ -29,7 +21,6 @@ public class AgentSoccer : Agent
     [HideInInspector]
     public Team team;
     float m_KickPower;
-    // The coefficient for the reward for colliding with a ball. Set using curriculum.
     float m_BallTouch;
     public Position position;
 
@@ -37,7 +28,6 @@ public class AgentSoccer : Agent
     float m_Existential;
     float m_LateralSpeed;
     float m_ForwardSpeed;
-
 
     [HideInInspector]
     public Rigidbody agentRb;
@@ -47,6 +37,11 @@ public class AgentSoccer : Agent
     public float rotSign;
 
     EnvironmentParameters m_ResetParams;
+
+    Vector3 m_PreviousPosition;
+    float m_CumulativeDistance;
+    const float k_DistanceRewardThreshold = 10f;
+    const float k_DistanceReward = 0.1f;
 
     public override void Initialize()
     {
@@ -93,6 +88,9 @@ public class AgentSoccer : Agent
         agentRb.maxAngularVelocity = 500;
 
         m_ResetParams = Academy.Instance.EnvironmentParameters;
+
+        m_PreviousPosition = transform.position;
+        m_CumulativeDistance = 0f;
     }
 
     public void MoveAgent(ActionSegment<int> act)
@@ -143,26 +141,32 @@ public class AgentSoccer : Agent
     }
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
-
     {
-
         if (position == Position.Goalie)
         {
-            // Existential bonus for Goalies.
             AddReward(m_Existential);
         }
         else if (position == Position.Striker)
         {
-            // Existential penalty for Strikers
             AddReward(-m_Existential);
         }
+
+        float distanceMoved = Vector3.Distance(transform.position, m_PreviousPosition);
+        m_CumulativeDistance += distanceMoved;
+        m_PreviousPosition = transform.position;
+
+        if (m_CumulativeDistance >= k_DistanceRewardThreshold)
+        {
+            AddReward(k_DistanceReward);
+            m_CumulativeDistance = 0f;
+        }
+
         MoveAgent(actionBuffers.DiscreteActions);
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)
     {
         var discreteActionsOut = actionsOut.DiscreteActions;
-        //forward
         if (Input.GetKey(KeyCode.W))
         {
             discreteActionsOut[0] = 1;
@@ -171,7 +175,6 @@ public class AgentSoccer : Agent
         {
             discreteActionsOut[0] = 2;
         }
-        //rotate
         if (Input.GetKey(KeyCode.A))
         {
             discreteActionsOut[2] = 1;
@@ -180,7 +183,6 @@ public class AgentSoccer : Agent
         {
             discreteActionsOut[2] = 2;
         }
-        //right
         if (Input.GetKey(KeyCode.E))
         {
             discreteActionsOut[1] = 1;
@@ -190,9 +192,7 @@ public class AgentSoccer : Agent
             discreteActionsOut[1] = 2;
         }
     }
-    /// <summary>
-    /// Used to provide a "kick" to the ball.
-    /// </summary>
+
     void OnCollisionEnter(Collision c)
     {
         var force = k_Power * m_KickPower;
@@ -212,6 +212,7 @@ public class AgentSoccer : Agent
     public override void OnEpisodeBegin()
     {
         m_BallTouch = m_ResetParams.GetWithDefault("ball_touch", 0);
+        m_PreviousPosition = transform.position;
+        m_CumulativeDistance = 0f;
     }
-
 }
