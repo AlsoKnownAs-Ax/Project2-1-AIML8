@@ -110,17 +110,22 @@ public class WalkerAgent : Agent
     /// <summary>
     /// Add relevant information on each body part to observations.
     /// </summary>
-    public void CollectObservationBodyPart(BodyPart bp, VectorSensor sensor)
-    {
-        //GROUND CHECK
-        sensor.AddObservation(bp.groundContact.touchingGround); // Is this bp touching the ground
+public void CollectObservationBodyPart(BodyPart bp, VectorSensor sensor)
+{
+    var toBodyPart = bp.rb.position - hips.position;
+    float angleToBodyPart = Vector3.Dot(m_OrientationCube.transform.forward, toBodyPart.normalized);
 
-        //Get velocities in the context of our orientation cube's space
-        //Note: You can get these velocities in world space as well but it may not train as well.
+    // Only collect observations if the body part is within a 120-degree forward-facing field of view
+    if (angleToBodyPart > Mathf.Cos(60 * Mathf.Deg2Rad)) // 120-degree field of view (60 degrees in each direction)
+    {
+        // Ground check
+        sensor.AddObservation(bp.groundContact.touchingGround); 
+
+        // Get velocities in the context of our orientation cube's space
         sensor.AddObservation(m_OrientationCube.transform.InverseTransformDirection(bp.rb.velocity));
         sensor.AddObservation(m_OrientationCube.transform.InverseTransformDirection(bp.rb.angularVelocity));
 
-        //Get position relative to hips in the context of our orientation cube's space
+        // Get position relative to hips in the context of our orientation cube's space
         sensor.AddObservation(m_OrientationCube.transform.InverseTransformDirection(bp.rb.position - hips.position));
 
         if (bp.rb.transform != hips && bp.rb.transform != handL && bp.rb.transform != handR)
@@ -129,38 +134,50 @@ public class WalkerAgent : Agent
             sensor.AddObservation(bp.currentStrength / m_JdController.maxJointForceLimit);
         }
     }
+}
+
+
 
     /// <summary>
     /// Loop over body parts to add them to observation.
     /// </summary>
-    public override void CollectObservations(VectorSensor sensor)
+    /// 
+public override void CollectObservations(VectorSensor sensor)
+{
+    var cubeForward = m_OrientationCube.transform.forward;
+
+    // Velocity we want to match
+    var velGoal = cubeForward * MTargetWalkingSpeed;
+    // Ragdoll's average velocity
+    var avgVel = GetAvgVelocity();
+
+    // Current ragdoll velocity, normalized
+    sensor.AddObservation(Vector3.Distance(velGoal, avgVel));
+    // Average body velocity relative to cube
+    sensor.AddObservation(m_OrientationCube.transform.InverseTransformDirection(avgVel));
+    // Velocity goal relative to cube
+    sensor.AddObservation(m_OrientationCube.transform.InverseTransformDirection(velGoal));
+
+    // Rotation deltas
+    sensor.AddObservation(Quaternion.FromToRotation(hips.forward, cubeForward));
+    sensor.AddObservation(Quaternion.FromToRotation(head.forward, cubeForward));
+
+    // Position of the target relative to cube (only if within forward-facing angle)
+    var toTarget = target.position - hips.position;
+    float angleToTarget = Vector3.Dot(cubeForward, toTarget.normalized);
+    if (angleToTarget > Mathf.Cos(60 * Mathf.Deg2Rad)) // 120-degree field of view (60 degrees in each direction)
     {
-        var cubeForward = m_OrientationCube.transform.forward;
-
-        //velocity we want to match
-        var velGoal = cubeForward * MTargetWalkingSpeed;
-        //ragdoll's avg vel
-        var avgVel = GetAvgVelocity();
-
-        //current ragdoll velocity. normalized
-        sensor.AddObservation(Vector3.Distance(velGoal, avgVel));
-        //avg body vel relative to cube
-        sensor.AddObservation(m_OrientationCube.transform.InverseTransformDirection(avgVel));
-        //vel goal relative to cube
-        sensor.AddObservation(m_OrientationCube.transform.InverseTransformDirection(velGoal));
-
-        //rotation deltas
-        sensor.AddObservation(Quaternion.FromToRotation(hips.forward, cubeForward));
-        sensor.AddObservation(Quaternion.FromToRotation(head.forward, cubeForward));
-
-        //Position of target position relative to cube
-        sensor.AddObservation(m_OrientationCube.transform.InverseTransformPoint(target.transform.position));
-
-        foreach (var bodyPart in m_JdController.bodyPartsList)
-        {
-            CollectObservationBodyPart(bodyPart, sensor);
-        }
+        sensor.AddObservation(m_OrientationCube.transform.InverseTransformPoint(target.position));
     }
+
+    // Loop over body parts to add them to observation
+    foreach (var bodyPart in m_JdController.bodyPartsList)
+    {
+        CollectObservationBodyPart(bodyPart, sensor);
+    }
+}
+
+
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
 
