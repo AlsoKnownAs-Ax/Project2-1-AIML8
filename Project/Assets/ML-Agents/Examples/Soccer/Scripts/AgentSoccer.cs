@@ -4,13 +4,14 @@ using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Policies;
 
 public enum Team
-{
-    Blue = 0,
-    Purple = 1
-}
+    {
+        Blue = 0,
+        Purple = 1
+    }
 
 public class AgentSoccer : Agent
 {
+
     // Note that that the detectable tags are different for the blue and purple teams. The order is
     // * ball
     // * own goal
@@ -26,10 +27,10 @@ public class AgentSoccer : Agent
         Generic
     }
 
-    [HideInInspector]
     public Team team;
+    private VisionCone visionCone;
+    private GameObject ball;
     float m_KickPower;
-    // The coefficient for the reward for colliding with a ball. Set using curriculum.
     float m_BallTouch;
     public Position position;
 
@@ -38,8 +39,6 @@ public class AgentSoccer : Agent
     float m_LateralSpeed;
     float m_ForwardSpeed;
 
-
-    [HideInInspector]
     public Rigidbody agentRb;
     SoccerSettings m_SoccerSettings;
     BehaviorParameters m_BehaviorParameters;
@@ -47,7 +46,6 @@ public class AgentSoccer : Agent
     public float rotSign;
 
     EnvironmentParameters m_ResetParams;
-
     public override void Initialize()
     {
         SoccerEnvController envController = GetComponentInParent<SoccerEnvController>();
@@ -61,38 +59,30 @@ public class AgentSoccer : Agent
         }
 
         m_BehaviorParameters = gameObject.GetComponent<BehaviorParameters>();
-        if (m_BehaviorParameters.TeamId == (int)Team.Blue)
-        {
-            team = Team.Blue;
-            initialPos = new Vector3(transform.position.x - 5f, .5f, transform.position.z);
-            rotSign = 1f;
-        }
-        else
-        {
-            team = Team.Purple;
-            initialPos = new Vector3(transform.position.x + 5f, .5f, transform.position.z);
-            rotSign = -1f;
-        }
-        if (position == Position.Goalie)
-        {
-            m_LateralSpeed = 1.0f;
-            m_ForwardSpeed = 1.0f;
-        }
-        else if (position == Position.Striker)
-        {
-            m_LateralSpeed = 0.3f;
-            m_ForwardSpeed = 1.3f;
-        }
-        else
-        {
-            m_LateralSpeed = 0.3f;
-            m_ForwardSpeed = 1.0f;
-        }
+        team = m_BehaviorParameters.TeamId == (int)Team.Blue ? Team.Blue : Team.Purple;
+        initialPos = new Vector3(transform.position.x + (team == Team.Blue ? -5f : 5f), 0.5f, transform.position.z);
+        rotSign = team == Team.Blue ? 1f : -1f;
+
+        m_LateralSpeed = position == Position.Goalie ? 1.0f : 0.3f;
+        m_ForwardSpeed = position == Position.Striker ? 1.3f : 1.0f;
+
         m_SoccerSettings = FindObjectOfType<SoccerSettings>();
         agentRb = GetComponent<Rigidbody>();
         agentRb.maxAngularVelocity = 500;
 
         m_ResetParams = Academy.Instance.EnvironmentParameters;
+
+        // Initialize VisionCone
+        visionCone = GetComponent<VisionCone>();
+        if (visionCone == null)
+        {
+            visionCone = gameObject.AddComponent<VisionCone>();
+        }
+
+        visionCone.SetVisionPattern(VisionCone.VisionPattern.Scanning);
+
+        // Find the ball in the environment
+        ball = GameObject.FindGameObjectWithTag("ball");
     }
 
     public void MoveAgent(ActionSegment<int> act)
@@ -138,61 +128,50 @@ public class AgentSoccer : Agent
         }
 
         transform.Rotate(rotateDir, Time.deltaTime * 100f);
-        agentRb.AddForce(dirToGo * m_SoccerSettings.agentRunSpeed,
-            ForceMode.VelocityChange);
+        agentRb.AddForce(dirToGo * m_SoccerSettings.agentRunSpeed, ForceMode.VelocityChange);
     }
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
-
     {
-
         if (position == Position.Goalie)
         {
-            // Existential bonus for Goalies.
-            AddReward(m_Existential);
+            AddReward(m_Existential); // Existential reward for goalies
         }
         else if (position == Position.Striker)
         {
-            // Existential penalty for Strikers
-            AddReward(-m_Existential);
+            AddReward(-m_Existential); // Existential penalty for strikers
         }
+
         MoveAgent(actionBuffers.DiscreteActions);
+
+        // Check if the ball is within the agent's vision
+        if (ball != null && visionCone.IsTargetVisible(ball.transform.position))
+        {
+            AddReward(0.1f); // Reward for seeing the ball
+
+            // Optional: Adjust movement behavior based on ball visibility
+            Vector3 directionToBall = (ball.transform.position - transform.position).normalized;
+            MoveAgentToward(directionToBall);
+        }
+    }
+
+    private void MoveAgentToward(Vector3 direction)
+    {
+        var dirToGo = direction * m_ForwardSpeed;
+        agentRb.AddForce(dirToGo * m_SoccerSettings.agentRunSpeed, ForceMode.VelocityChange);
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)
     {
         var discreteActionsOut = actionsOut.DiscreteActions;
-        //forward
-        if (Input.GetKey(KeyCode.W))
-        {
-            discreteActionsOut[0] = 1;
-        }
-        if (Input.GetKey(KeyCode.S))
-        {
-            discreteActionsOut[0] = 2;
-        }
-        //rotate
-        if (Input.GetKey(KeyCode.A))
-        {
-            discreteActionsOut[2] = 1;
-        }
-        if (Input.GetKey(KeyCode.D))
-        {
-            discreteActionsOut[2] = 2;
-        }
-        //right
-        if (Input.GetKey(KeyCode.E))
-        {
-            discreteActionsOut[1] = 1;
-        }
-        if (Input.GetKey(KeyCode.Q))
-        {
-            discreteActionsOut[1] = 2;
-        }
+        if (Input.GetKey(KeyCode.W)) { discreteActionsOut[0] = 1; }
+        if (Input.GetKey(KeyCode.S)) { discreteActionsOut[0] = 2; }
+        if (Input.GetKey(KeyCode.A)) { discreteActionsOut[2] = 1; }
+        if (Input.GetKey(KeyCode.D)) { discreteActionsOut[2] = 2; }
+        if (Input.GetKey(KeyCode.E)) { discreteActionsOut[1] = 1; }
+        if (Input.GetKey(KeyCode.Q)) { discreteActionsOut[1] = 2; }
     }
-    /// <summary>
-    /// Used to provide a "kick" to the ball.
-    /// </summary>
+
     void OnCollisionEnter(Collision c)
     {
         var force = k_Power * m_KickPower;
@@ -213,5 +192,4 @@ public class AgentSoccer : Agent
     {
         m_BallTouch = m_ResetParams.GetWithDefault("ball_touch", 0);
     }
-
 }
