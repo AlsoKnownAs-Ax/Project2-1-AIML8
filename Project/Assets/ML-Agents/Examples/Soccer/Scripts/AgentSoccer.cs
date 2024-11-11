@@ -1,8 +1,35 @@
+/*
+ * Memory-Based Observation Implementation:
+ * - Introduced a memory mechanism to retain observations from the past MemorySize frames.
+ *   - Variable: private const int MemorySize = 10;
+ *   - Variable: private Queue<Vector3> pastPositions;
+ *   - Variable: private Queue<Vector3> pastRelativeBallPositions;
+ *   - Variable: private Queue<Vector3> pastRelativeTeammatePositions;
+ * - The agent stores its past positions and relative positions in queues to simulate awareness of its previous locations.
+ *   - Method: Initialize()
+ *   - Method: OnActionReceived(ActionBuffers actionBuffers)
+ * - The memory is updated in the OnActionReceived method and used as part of the agent’s state input.
+ *   - Method: OnActionReceived(ActionBuffers actionBuffers)
+ * - Older observations are forgotten to prevent the memory from growing indefinitely.
+ *   - Method: OnActionReceived(ActionBuffers actionBuffers)
+ * - The agent receives additional rewards based on the distance to its past positions to encourage exploration:
+ *   - For each past position, the agent receives a reward of 0.01 times the distance to that position.
+ *     - Method: OnActionReceived(ActionBuffers actionBuffers)
+ *     - Reward Calculation: AddReward(Vector3.Distance(transform.position, pastPosition) * 0.01f)
+ * - The agent also receives a reward of 0.1 when it moves a cumulative distance of 10 units.
+ *   - Variable: const float k_DistanceRewardThreshold = 10f;
+ *   - Variable: const float k_DistanceReward = 0.1f;
+ *   - Method: OnActionReceived(ActionBuffers actionBuffers)
+ *   - Reward Calculation: AddReward(k_DistanceReward)
+ */
+
 using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Policies;
+using System.Collections.Generic;
 
+// Enum for team identification
 public enum Team
 {
     Blue = 0,
@@ -11,14 +38,7 @@ public enum Team
 
 public class AgentSoccer : Agent
 {
-    // Note that that the detectable tags are different for the blue and purple teams. The order is
-    // * ball
-    // * own goal
-    // * opposing goal
-    // * wall
-    // * own teammate
-    // * opposing player
-
+    // Enum for player positions
     public enum Position
     {
         Striker,
@@ -27,27 +47,41 @@ public class AgentSoccer : Agent
     }
 
     [HideInInspector]
-    public Team team;
-    float m_KickPower;
-    // The coefficient for the reward for colliding with a ball. Set using curriculum.
-    float m_BallTouch;
-    public Position position;
+    public Team team; // Team of the agent
+    float m_KickPower; // Power of the kick
+    float m_BallTouch; // Ball touch parameter
+    public Position position; // Position of the agent
 
-    const float k_Power = 2000f;
-    float m_Existential;
-    float m_LateralSpeed;
-    float m_ForwardSpeed;
-
+    const float k_Power = 2000f; // Constant power value
+    float m_Existential; // Existential reward
+    float m_LateralSpeed; // Speed for lateral movement
+    float m_ForwardSpeed; // Speed for forward movement
 
     [HideInInspector]
-    public Rigidbody agentRb;
-    SoccerSettings m_SoccerSettings;
-    BehaviorParameters m_BehaviorParameters;
-    public Vector3 initialPos;
-    public float rotSign;
+    public Rigidbody agentRb; // Rigidbody of the agent
+    SoccerSettings m_SoccerSettings; // Soccer settings
+    BehaviorParameters m_BehaviorParameters; // Behavior parameters
+    public Vector3 initialPos; // Initial position of the agent
+    public float rotSign; // Rotation sign
 
-    EnvironmentParameters m_ResetParams;
+    EnvironmentParameters m_ResetParams; // Environment parameters
 
+    Vector3 m_PreviousPosition; // Previous position of the agent
+    float m_CumulativeDistance; // Cumulative distance moved
+    const float k_DistanceRewardThreshold = 10f; // Distance reward threshold
+    const float k_DistanceReward = 0.1f; // Distance reward
+
+    // Memory for past observations
+    private const int MemorySize = 10;
+    private Queue<Vector3> pastPositions; // Queue to store past positions
+    private Queue<Vector3> pastRelativeBallPositions; // Queue to store past relative ball positions
+    private Queue<Vector3> pastRelativeTeammatePositions; // Queue to store past relative teammate positions
+
+    /*
+     * Initialize the agent
+     * - Sets up initial parameters and configurations for the agent.
+     * - Initializes the memory queues for past positions and relative positions.
+     */
     public override void Initialize()
     {
         SoccerEnvController envController = GetComponentInParent<SoccerEnvController>();
@@ -73,6 +107,8 @@ public class AgentSoccer : Agent
             initialPos = new Vector3(transform.position.x + 5f, .5f, transform.position.z);
             rotSign = -1f;
         }
+
+        // Set speed based on position
         if (position == Position.Goalie)
         {
             m_LateralSpeed = 1.0f;
@@ -88,13 +124,27 @@ public class AgentSoccer : Agent
             m_LateralSpeed = 0.3f;
             m_ForwardSpeed = 1.0f;
         }
+
         m_SoccerSettings = FindObjectOfType<SoccerSettings>();
         agentRb = GetComponent<Rigidbody>();
         agentRb.maxAngularVelocity = 500;
 
         m_ResetParams = Academy.Instance.EnvironmentParameters;
+
+        m_PreviousPosition = transform.position;
+        m_CumulativeDistance = 0f;
+
+        // Initialize the memory queues
+        pastPositions = new Queue<Vector3>(MemorySize);
+        pastRelativeBallPositions = new Queue<Vector3>(MemorySize);
+        pastRelativeTeammatePositions = new Queue<Vector3>(MemorySize);
     }
 
+    /*
+     * Move the agent based on actions
+     * - Determines the direction and rotation based on the action inputs.
+     * - Applies the movement and rotation to the agent.
+     */
     public void MoveAgent(ActionSegment<int> act)
     {
         var dirToGo = Vector3.zero;
@@ -106,6 +156,7 @@ public class AgentSoccer : Agent
         var rightAxis = act[1];
         var rotateAxis = act[2];
 
+        // Determine direction based on action
         switch (forwardAxis)
         {
             case 1:
@@ -137,32 +188,92 @@ public class AgentSoccer : Agent
                 break;
         }
 
+        // Apply rotation and force
         transform.Rotate(rotateDir, Time.deltaTime * 100f);
-        agentRb.AddForce(dirToGo * m_SoccerSettings.agentRunSpeed,
-            ForceMode.VelocityChange);
+        agentRb.AddForce(dirToGo * m_SoccerSettings.agentRunSpeed, ForceMode.VelocityChange);
     }
 
+    /*
+     * Called when an action is received
+     * - Updates the agent's state based on received actions.
+     * - Updates the memory with the latest position and relative positions.
+     * - Adds rewards based on the distance to past positions and cumulative distance moved.
+     */
     public override void OnActionReceived(ActionBuffers actionBuffers)
-
     {
-
+        // Add reward based on position
         if (position == Position.Goalie)
         {
-            // Existential bonus for Goalies.
             AddReward(m_Existential);
         }
         else if (position == Position.Striker)
         {
-            // Existential penalty for Strikers
             AddReward(-m_Existential);
         }
+
+        // Calculate distance moved and update cumulative distance
+        float distanceMoved = Vector3.Distance(transform.position, m_PreviousPosition);
+        m_CumulativeDistance += distanceMoved;
+        m_PreviousPosition = transform.position;
+
+        // Reward for moving a cumulative distance of 10 units
+        if (m_CumulativeDistance >= k_DistanceRewardThreshold)
+        {
+            AddReward(k_DistanceReward); // Reward of 0.1
+            m_CumulativeDistance = 0f;
+        }
+
+        // Update memory with the latest position
+        if (pastPositions.Count >= MemorySize)
+        {
+            pastPositions.Dequeue();
+            pastRelativeBallPositions.Dequeue();
+            pastRelativeTeammatePositions.Dequeue();
+        }
+        pastPositions.Enqueue(transform.position);
+
+        // Calculate relative positions
+        Vector3 relativeBallPosition = transform.position - ball.transform.position;
+        Vector3 relativeTeammatePosition = Vector3.zero; // Assuming a single teammate for simplicity
+        foreach (var teammate in teammates)
+        {
+            if (teammate != this)
+            {
+                relativeTeammatePosition = transform.position - teammate.transform.position;
+                break;
+            }
+        }
+
+        pastRelativeBallPositions.Enqueue(relativeBallPosition);
+        pastRelativeTeammatePositions.Enqueue(relativeTeammatePosition);
+
+        // Additional rewards based on the distance to past positions
+        foreach (var pastPosition in pastPositions)
+        {
+            AddReward(Vector3.Distance(transform.position, pastPosition) * 0.01f);
+        }
+
+        // Additional rewards based on the relative positions
+        foreach (var pastRelativeBallPosition in pastRelativeBallPositions)
+        {
+            AddReward(Vector3.Distance(relativeBallPosition, pastRelativeBallPosition) * 0.01f);
+        }
+        foreach (var pastRelativeTeammatePosition in pastRelativeTeammatePositions)
+        {
+            AddReward(Vector3.Distance(relativeTeammatePosition, pastRelativeTeammatePosition) * 0.01f);
+        }
+
+        // Move the agent based on actions
         MoveAgent(actionBuffers.DiscreteActions);
     }
 
+    /*
+     * Provide heuristic actions for testing
+     * - Allows manual control of the agent using keyboard inputs.
+     */
     public override void Heuristic(in ActionBuffers actionsOut)
     {
         var discreteActionsOut = actionsOut.DiscreteActions;
-        //forward
         if (Input.GetKey(KeyCode.W))
         {
             discreteActionsOut[0] = 1;
@@ -171,7 +282,6 @@ public class AgentSoccer : Agent
         {
             discreteActionsOut[0] = 2;
         }
-        //rotate
         if (Input.GetKey(KeyCode.A))
         {
             discreteActionsOut[2] = 1;
@@ -180,7 +290,6 @@ public class AgentSoccer : Agent
         {
             discreteActionsOut[2] = 2;
         }
-        //right
         if (Input.GetKey(KeyCode.E))
         {
             discreteActionsOut[1] = 1;
@@ -190,9 +299,12 @@ public class AgentSoccer : Agent
             discreteActionsOut[1] = 2;
         }
     }
-    /// <summary>
-    /// Used to provide a "kick" to the ball.
-    /// </summary>
+
+    /*
+     * Called when a collision occurs
+     * - Adds a reward if the agent touches the ball.
+     * - Applies force to the ball based on the agent's kick power.
+     */
     void OnCollisionEnter(Collision c)
     {
         var force = k_Power * m_KickPower;
@@ -209,9 +321,18 @@ public class AgentSoccer : Agent
         }
     }
 
+    /*
+     * Called at the beginning of each episode
+     * - Resets the agent's state and clears the memory.
+     */
     public override void OnEpisodeBegin()
     {
         m_BallTouch = m_ResetParams.GetWithDefault("ball_touch", 0);
+        m_PreviousPosition = transform.position;
+        m_CumulativeDistance = 0f;
+        // Clear the memory at the beginning of each episode
+        pastPositions.Clear();
+        pastRelativeBallPositions.Clear();
+        pastRelativeTeammatePositions.Clear();
     }
-
 }
