@@ -77,6 +77,10 @@ public class AgentSoccer : Agent
     private Queue<Vector3> pastRelativeBallPositions; // Queue to store past relative ball positions
     private Queue<Vector3> pastRelativeTeammatePositions; // Queue to store past relative teammate positions
 
+    // Add these new fields at the class level
+    [SerializeField] private GameObject ball; // Reference to the soccer ball
+    [SerializeField] private List<AgentSoccer> teammates; // List of teammate agents
+
     /*
      * Initialize the agent
      * - Sets up initial parameters and configurations for the agent.
@@ -138,6 +142,34 @@ public class AgentSoccer : Agent
         pastPositions = new Queue<Vector3>(MemorySize);
         pastRelativeBallPositions = new Queue<Vector3>(MemorySize);
         pastRelativeTeammatePositions = new Queue<Vector3>(MemorySize);
+
+        // Find the ball if not assigned
+        if (ball == null)
+        {
+            ball = GameObject.FindGameObjectWithTag("ball");
+        }
+
+        // Find teammates if not assigned
+        if (teammates == null || teammates.Count == 0)
+        {
+            teammates = new List<AgentSoccer>();
+            var allAgents = FindObjectsOfType<AgentSoccer>();
+            foreach (var agent in allAgents)
+            {
+                if (agent != this && agent.team == this.team)
+                {
+                    teammates.Add(agent);
+                }
+            }
+        }
+
+        // Initialize queues with initial positions
+        for (int i = 0; i < MemorySize; i++)
+        {
+            pastPositions.Enqueue(transform.position);
+            pastRelativeBallPositions.Enqueue(ball != null ? transform.position - ball.transform.position : Vector3.zero);
+            pastRelativeTeammatePositions.Enqueue(Vector3.zero);
+        }
     }
 
     /*
@@ -223,44 +255,54 @@ public class AgentSoccer : Agent
             m_CumulativeDistance = 0f;
         }
 
-        // Update memory with the latest position
-        if (pastPositions.Count >= MemorySize)
+        // Safety check before dequeuing
+        if (pastPositions.Count > 0 && ball != null)
         {
-            pastPositions.Dequeue();
-            pastRelativeBallPositions.Dequeue();
-            pastRelativeTeammatePositions.Dequeue();
-        }
-        pastPositions.Enqueue(transform.position);
-
-        // Calculate relative positions
-        Vector3 relativeBallPosition = transform.position - ball.transform.position;
-        Vector3 relativeTeammatePosition = Vector3.zero; // Assuming a single teammate for simplicity
-        foreach (var teammate in teammates)
-        {
-            if (teammate != this)
+            // Update memory with the latest position
+            if (pastPositions.Count >= MemorySize)
             {
-                relativeTeammatePosition = transform.position - teammate.transform.position;
-                break;
+                pastPositions.Dequeue();
+                pastRelativeBallPositions.Dequeue();
+                pastRelativeTeammatePositions.Dequeue();
             }
-        }
+            
+            pastPositions.Enqueue(transform.position);
 
-        pastRelativeBallPositions.Enqueue(relativeBallPosition);
-        pastRelativeTeammatePositions.Enqueue(relativeTeammatePosition);
+            // Calculate relative positions with null checks
+            Vector3 relativeBallPosition = ball != null ? 
+                transform.position - ball.transform.position : Vector3.zero;
+            Vector3 relativeTeammatePosition = Vector3.zero;
+            
+            if (teammates != null && teammates.Count > 0)
+            {
+                foreach (var teammate in teammates)
+                {
+                    if (teammate != null && teammate != this)
+                    {
+                        relativeTeammatePosition = transform.position - teammate.transform.position;
+                        break;
+                    }
+                }
+            }
 
-        // Additional rewards based on the distance to past positions
-        foreach (var pastPosition in pastPositions)
-        {
-            AddReward(Vector3.Distance(transform.position, pastPosition) * 0.01f);
-        }
+            pastRelativeBallPositions.Enqueue(relativeBallPosition);
+            pastRelativeTeammatePositions.Enqueue(relativeTeammatePosition);
 
-        // Additional rewards based on the relative positions
-        foreach (var pastRelativeBallPosition in pastRelativeBallPositions)
-        {
-            AddReward(Vector3.Distance(relativeBallPosition, pastRelativeBallPosition) * 0.01f);
-        }
-        foreach (var pastRelativeTeammatePosition in pastRelativeTeammatePositions)
-        {
-            AddReward(Vector3.Distance(relativeTeammatePosition, pastRelativeTeammatePosition) * 0.01f);
+            // Additional rewards only if we have valid data
+            foreach (var pastPosition in pastPositions)
+            {
+                AddReward(Vector3.Distance(transform.position, pastPosition) * 0.01f);
+            }
+
+            foreach (var pastRelativeBallPosition in pastRelativeBallPositions)
+            {
+                AddReward(Vector3.Distance(relativeBallPosition, pastRelativeBallPosition) * 0.01f);
+            }
+
+            foreach (var pastRelativeTeammatePosition in pastRelativeTeammatePositions)
+            {
+                AddReward(Vector3.Distance(relativeTeammatePosition, pastRelativeTeammatePosition) * 0.01f);
+            }
         }
 
         // Move the agent based on actions
