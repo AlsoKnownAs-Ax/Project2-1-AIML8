@@ -11,33 +11,23 @@ public enum Team
 
 public class AgentSoccer : Agent
 {
-    // Note that that the detectable tags are different for the blue and purple teams. The order is
-    // * ball
-    // * own goal
-    // * opposing goal
-    // * wall
-    // * own teammate
-    // * opposing player
-
+    // Existing fields
+    [HideInInspector]
+    public Team team;
+    float m_KickPower;
+    float m_BallTouch;
     public enum Position
     {
         Striker,
         Goalie,
         Generic
     }
-
-    [HideInInspector]
-    public Team team;
-    float m_KickPower;
-    // The coefficient for the reward for colliding with a ball. Set using curriculum.
-    float m_BallTouch;
     public Position position;
 
     const float k_Power = 2000f;
     float m_Existential;
     float m_LateralSpeed;
     float m_ForwardSpeed;
-
 
     [HideInInspector]
     public Rigidbody agentRb;
@@ -48,8 +38,13 @@ public class AgentSoccer : Agent
 
     EnvironmentParameters m_ResetParams;
 
+    // Hearing Zone integration
+    private HearingZone hearingZone;
+    private SphereCollider hearingCollider; // Reference to the collider to set radius
+
     public override void Initialize()
     {
+        // Existing initialization code
         SoccerEnvController envController = GetComponentInParent<SoccerEnvController>();
         if (envController != null)
         {
@@ -93,10 +88,38 @@ public class AgentSoccer : Agent
         agentRb.maxAngularVelocity = 500;
 
         m_ResetParams = Academy.Instance.EnvironmentParameters;
+
+        // Initialize Hearing Zone
+        hearingZone = GetComponentInChildren<HearingZone>();
+            if (hearingZone != null)
+            {
+                hearingZone.OnObjectDetected += HandleDetectedObject;
+                Debug.Log("Hearing zone setup complete"); // Log for successful setup
+            }
+            else
+            {
+                Debug.LogWarning("Hearing zone not found"); // Warning if not found
+            }
+    }
+
+    private void HandleDetectedObject(GameObject obj)
+    {
+        if (obj.CompareTag("ball"))
+        {
+            Debug.Log("Ball detected in hearing range");
+            AddReward(0.1f); // Reward for detecting the ball
+        }
+        else if (obj.CompareTag("Player"))
+        {
+            Debug.Log("Player detected in hearing range");
+            // Adjust behavior based on teammate or opponent
+            AddReward(0.05f); // Example reward adjustment
+        }
     }
 
     public void MoveAgent(ActionSegment<int> act)
     {
+        // Existing movement code
         var dirToGo = Vector3.zero;
         var rotateDir = Vector3.zero;
 
@@ -138,22 +161,18 @@ public class AgentSoccer : Agent
         }
 
         transform.Rotate(rotateDir, Time.deltaTime * 100f);
-        agentRb.AddForce(dirToGo * m_SoccerSettings.agentRunSpeed,
-            ForceMode.VelocityChange);
+        agentRb.AddForce(dirToGo * m_SoccerSettings.agentRunSpeed, ForceMode.VelocityChange);
     }
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
-
     {
-
+        // Existing reward logic
         if (position == Position.Goalie)
         {
-            // Existential bonus for Goalies.
             AddReward(m_Existential);
         }
         else if (position == Position.Striker)
         {
-            // Existential penalty for Strikers
             AddReward(-m_Existential);
         }
         MoveAgent(actionBuffers.DiscreteActions);
@@ -161,8 +180,8 @@ public class AgentSoccer : Agent
 
     public override void Heuristic(in ActionBuffers actionsOut)
     {
+        // Existing heuristic code
         var discreteActionsOut = actionsOut.DiscreteActions;
-        //forward
         if (Input.GetKey(KeyCode.W))
         {
             discreteActionsOut[0] = 1;
@@ -171,7 +190,6 @@ public class AgentSoccer : Agent
         {
             discreteActionsOut[0] = 2;
         }
-        //rotate
         if (Input.GetKey(KeyCode.A))
         {
             discreteActionsOut[2] = 1;
@@ -180,7 +198,6 @@ public class AgentSoccer : Agent
         {
             discreteActionsOut[2] = 2;
         }
-        //right
         if (Input.GetKey(KeyCode.E))
         {
             discreteActionsOut[1] = 1;
@@ -190,11 +207,10 @@ public class AgentSoccer : Agent
             discreteActionsOut[1] = 2;
         }
     }
-    /// <summary>
-    /// Used to provide a "kick" to the ball.
-    /// </summary>
+
     void OnCollisionEnter(Collision c)
     {
+        // Existing collision logic for kicking the ball
         var force = k_Power * m_KickPower;
         if (position == Position.Goalie)
         {
@@ -213,5 +229,4 @@ public class AgentSoccer : Agent
     {
         m_BallTouch = m_ResetParams.GetWithDefault("ball_touch", 0);
     }
-
 }
