@@ -39,7 +39,7 @@ public class AgentSoccer : Agent
 
     // Hearing Zone integration
     private HearingZone hearingZone;
-    private SphereCollider hearingCollider; /
+    private SphereCollider hearingCollider; 
 
     public override void Initialize()
     {
