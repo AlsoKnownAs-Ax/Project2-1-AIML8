@@ -22,7 +22,6 @@ public class AgentSoccer : Agent
 
     public Team team;
     private VisionCone visionCone;
-    private GameObject ball;
     float m_KickPower;
     float m_BallTouch;
     public Position position;
@@ -38,8 +37,6 @@ public class AgentSoccer : Agent
     BehaviorParameters m_BehaviorParameters;
     public Vector3 initialPos;
     public float rotSign;
-
-    EnvironmentParameters m_ResetParams;
 
     // Hearing Zone integration
     private HearingZone hearingZone;
@@ -140,6 +137,15 @@ public class AgentSoccer : Agent
         {
             Debug.LogWarning("Hearing zone not found");
         }
+
+        memorySensor = GetComponent<MemoryBasedSensor>();
+        if (memorySensor == null)
+        {
+            memorySensor = gameObject.AddComponent<MemoryBasedSensor>();
+        }
+
+        // Initialize the memory sensor
+        memorySensor.InitializeMemoryBasedSensor(this, ball, teammates);
     }
 
     private void HandleDetectedObject(GameObject obj)
@@ -178,9 +184,6 @@ public class AgentSoccer : Agent
                 }
             }
         }
-
-        // Initialize the memory sensor
-        memorySensor = new MemoryBasedSensor(this, ball, teammates);
     }
 
     /*
@@ -232,7 +235,7 @@ public class AgentSoccer : Agent
         }
 
         // Apply rotation and force
-        transform.Rotate(rotateDir, Time.deltaTime * 100f)
+        transform.Rotate(rotateDir, Time.deltaTime * 100f);
         agentRb.AddForce(dirToGo * m_SoccerSettings.agentRunSpeed, ForceMode.VelocityChange);
     }
 
