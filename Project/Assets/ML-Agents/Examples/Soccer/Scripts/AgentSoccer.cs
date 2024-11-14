@@ -12,14 +12,10 @@ public enum Team
 public class AgentSoccer : Agent
 {
 
-    // Note that that the detectable tags are different for the blue and purple teams. The order is
-    // * ball
-    // * own goal
-    // * opposing goal
-    // * wall
-    // * own teammate
-    // * opposing player
-
+    [HideInInspector]
+    public Team team;
+    float m_KickPower;
+    float m_BallTouch;
     public enum Position
     {
         Striker,
@@ -39,6 +35,7 @@ public class AgentSoccer : Agent
     float m_LateralSpeed;
     float m_ForwardSpeed;
 
+    [HideInInspector]
     public Rigidbody agentRb;
     SoccerSettings m_SoccerSettings;
     BehaviorParameters m_BehaviorParameters;
@@ -46,6 +43,11 @@ public class AgentSoccer : Agent
     public float rotSign;
 
     EnvironmentParameters m_ResetParams;
+
+    // Hearing Zone integration
+    private HearingZone hearingZone;
+    private SphereCollider hearingCollider; 
+
     public override void Initialize()
     {
         SoccerEnvController envController = GetComponentInParent<SoccerEnvController>();
@@ -83,6 +85,33 @@ public class AgentSoccer : Agent
 
         // Find the ball in the environment
         ball = GameObject.FindGameObjectWithTag("ball");
+
+        // Initialize Hearing Zone
+        hearingZone = GetComponentInChildren<HearingZone>();
+            if (hearingZone != null)
+            {
+                hearingZone.OnObjectDetected += HandleDetectedObject;
+                Debug.Log("Hearing zone setup complete");
+            }
+            else
+            {
+                Debug.LogWarning("Hearing zone not found"); 
+            }
+    }
+
+    private void HandleDetectedObject(GameObject obj)
+    {
+        if (obj.CompareTag("ball"))
+        {
+            Debug.Log("Ball detected in hearing range");
+            AddReward(0.1f); // Reward for detecting the ball
+        }
+        else if (obj.CompareTag("Player"))
+        {
+            Debug.Log("Player detected in hearing range");
+           
+            AddReward(0.05f);
+        }
     }
 
     public void MoveAgent(ActionSegment<int> act)
@@ -164,13 +193,32 @@ public class AgentSoccer : Agent
     public override void Heuristic(in ActionBuffers actionsOut)
     {
         var discreteActionsOut = actionsOut.DiscreteActions;
-        if (Input.GetKey(KeyCode.W)) { discreteActionsOut[0] = 1; }
-        if (Input.GetKey(KeyCode.S)) { discreteActionsOut[0] = 2; }
-        if (Input.GetKey(KeyCode.A)) { discreteActionsOut[2] = 1; }
-        if (Input.GetKey(KeyCode.D)) { discreteActionsOut[2] = 2; }
-        if (Input.GetKey(KeyCode.E)) { discreteActionsOut[1] = 1; }
-        if (Input.GetKey(KeyCode.Q)) { discreteActionsOut[1] = 2; }
+        if (Input.GetKey(KeyCode.W))
+        {
+            discreteActionsOut[0] = 1;
+        }
+        if (Input.GetKey(KeyCode.S))
+        {
+            discreteActionsOut[0] = 2;
+        }
+        if (Input.GetKey(KeyCode.A))
+        {
+            discreteActionsOut[2] = 1;
+        }
+        if (Input.GetKey(KeyCode.D))
+        {
+            discreteActionsOut[2] = 2;
+        }
+        if (Input.GetKey(KeyCode.E))
+        {
+            discreteActionsOut[1] = 1;
+        }
+        if (Input.GetKey(KeyCode.Q))
+        {
+            discreteActionsOut[1] = 2;
+        }
     }
+
 
     void OnCollisionEnter(Collision c)
     {
