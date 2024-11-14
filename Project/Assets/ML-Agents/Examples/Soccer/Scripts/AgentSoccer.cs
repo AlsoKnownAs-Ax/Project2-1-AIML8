@@ -50,6 +50,12 @@ public class AgentSoccer : Agent
     [SerializeField] private List<AgentSoccer> teammates; // List of teammate agents
     private MemoryBasedSensor memorySensor;
 
+    void Start()
+    {
+        // Call OnEpisodeBegin at the start for testing
+        OnEpisodeBegin();
+    }
+
     /*
      * Initialize the agent
      * - Sets up initial parameters and configurations for the agent.
