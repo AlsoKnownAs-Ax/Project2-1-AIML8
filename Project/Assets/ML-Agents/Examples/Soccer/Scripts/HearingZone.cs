@@ -7,11 +7,11 @@ public class HearingZone : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // Check if the object is relevant, e.g., ball or other players
+        
         if (other.CompareTag("ball") || other.CompareTag("Player"))
         {
             Debug.Log("Object detected: " + other.name);
-            OnObjectDetected?.Invoke(other.gameObject); // Notify agent of detected object
+            OnObjectDetected?.Invoke(other.gameObject); 
         }
     }
 

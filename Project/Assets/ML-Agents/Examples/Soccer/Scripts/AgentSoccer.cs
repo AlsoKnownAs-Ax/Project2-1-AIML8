@@ -11,7 +11,6 @@ public enum Team
 
 public class AgentSoccer : Agent
 {
-    // Existing fields
     [HideInInspector]
     public Team team;
     float m_KickPower;
@@ -40,11 +39,10 @@ public class AgentSoccer : Agent
 
     // Hearing Zone integration
     private HearingZone hearingZone;
-    private SphereCollider hearingCollider; // Reference to the collider to set radius
+    private SphereCollider hearingCollider; /
 
     public override void Initialize()
     {
-        // Existing initialization code
         SoccerEnvController envController = GetComponentInParent<SoccerEnvController>();
         if (envController != null)
         {
@@ -94,11 +92,11 @@ public class AgentSoccer : Agent
             if (hearingZone != null)
             {
                 hearingZone.OnObjectDetected += HandleDetectedObject;
-                Debug.Log("Hearing zone setup complete"); // Log for successful setup
+                Debug.Log("Hearing zone setup complete");
             }
             else
             {
-                Debug.LogWarning("Hearing zone not found"); // Warning if not found
+                Debug.LogWarning("Hearing zone not found"); 
             }
     }
 
@@ -112,14 +110,13 @@ public class AgentSoccer : Agent
         else if (obj.CompareTag("Player"))
         {
             Debug.Log("Player detected in hearing range");
-            // Adjust behavior based on teammate or opponent
-            AddReward(0.05f); // Example reward adjustment
+           
+            AddReward(0.05f);
         }
     }
 
     public void MoveAgent(ActionSegment<int> act)
     {
-        // Existing movement code
         var dirToGo = Vector3.zero;
         var rotateDir = Vector3.zero;
 
@@ -166,7 +163,6 @@ public class AgentSoccer : Agent
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
-        // Existing reward logic
         if (position == Position.Goalie)
         {
             AddReward(m_Existential);
@@ -180,7 +176,6 @@ public class AgentSoccer : Agent
 
     public override void Heuristic(in ActionBuffers actionsOut)
     {
-        // Existing heuristic code
         var discreteActionsOut = actionsOut.DiscreteActions;
         if (Input.GetKey(KeyCode.W))
         {
@@ -210,7 +205,6 @@ public class AgentSoccer : Agent
 
     void OnCollisionEnter(Collision c)
     {
-        // Existing collision logic for kicking the ball
         var force = k_Power * m_KickPower;
         if (position == Position.Goalie)
         {
