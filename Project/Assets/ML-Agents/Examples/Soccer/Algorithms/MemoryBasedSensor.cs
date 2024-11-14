@@ -3,7 +3,9 @@ using System.Collections.Generic;
 
 public class MemoryBasedSensor : MonoBehaviour
 {
-    private const int MemorySize = 10;
+     [Header("Memory Settings")]
+
+    [SerializeField] private int MemorySize = 10;
     private const float k_DistanceRewardThreshold = 10f;
     private const float k_DistanceReward = 0.1f;
 
