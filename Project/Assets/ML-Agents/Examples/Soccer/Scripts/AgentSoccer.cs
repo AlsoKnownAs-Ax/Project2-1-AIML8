@@ -1,35 +1,9 @@
-/*
- * Memory-Based Observation Implementation:
- * - Introduced a memory mechanism to retain observations from the past MemorySize frames.
- *   - Variable: private const int MemorySize = 10;
- *   - Variable: private Queue<Vector3> pastPositions;
- *   - Variable: private Queue<Vector3> pastRelativeBallPositions;
- *   - Variable: private Queue<Vector3> pastRelativeTeammatePositions;
- * - The agent stores its past positions and relative positions in queues to simulate awareness of its previous locations.
- *   - Method: Initialize()
- *   - Method: OnActionReceived(ActionBuffers actionBuffers)
- * - The memory is updated in the OnActionReceived method and used as part of the agent’s state input.
- *   - Method: OnActionReceived(ActionBuffers actionBuffers)
- * - Older observations are forgotten to prevent the memory from growing indefinitely.
- *   - Method: OnActionReceived(ActionBuffers actionBuffers)
- * - The agent receives additional rewards based on the distance to its past positions to encourage exploration:
- *   - For each past position, the agent receives a reward of 0.01 times the distance to that position.
- *     - Method: OnActionReceived(ActionBuffers actionBuffers)
- *     - Reward Calculation: AddReward(Vector3.Distance(transform.position, pastPosition) * 0.01f)
- * - The agent also receives a reward of 0.1 when it moves a cumulative distance of 10 units.
- *   - Variable: const float k_DistanceRewardThreshold = 10f;
- *   - Variable: const float k_DistanceReward = 0.1f;
- *   - Method: OnActionReceived(ActionBuffers actionBuffers)
- *   - Reward Calculation: AddReward(k_DistanceReward)
- */
-
 using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Policies;
 using System.Collections.Generic;
 
-// Enum for team identification
 public enum Team
 {
     Blue = 0,
@@ -71,15 +45,10 @@ public class AgentSoccer : Agent
     const float k_DistanceRewardThreshold = 10f; // Distance reward threshold
     const float k_DistanceReward = 0.1f; // Distance reward
 
-    // Memory for past observations
-    private const int MemorySize = 10;
-    private Queue<Vector3> pastPositions; // Queue to store past positions
-    private Queue<Vector3> pastRelativeBallPositions; // Queue to store past relative ball positions
-    private Queue<Vector3> pastRelativeTeammatePositions; // Queue to store past relative teammate positions
-
     // Add these new fields at the class level
     [SerializeField] private GameObject ball; // Reference to the soccer ball
     [SerializeField] private List<AgentSoccer> teammates; // List of teammate agents
+    private MemoryBasedSensor memorySensor;
 
     /*
      * Initialize the agent
@@ -138,11 +107,6 @@ public class AgentSoccer : Agent
         m_PreviousPosition = transform.position;
         m_CumulativeDistance = 0f;
 
-        // Initialize the memory queues
-        pastPositions = new Queue<Vector3>(MemorySize);
-        pastRelativeBallPositions = new Queue<Vector3>(MemorySize);
-        pastRelativeTeammatePositions = new Queue<Vector3>(MemorySize);
-
         // Find the ball if not assigned
         if (ball == null)
         {
@@ -163,13 +127,8 @@ public class AgentSoccer : Agent
             }
         }
 
-        // Initialize queues with initial positions
-        for (int i = 0; i < MemorySize; i++)
-        {
-            pastPositions.Enqueue(transform.position);
-            pastRelativeBallPositions.Enqueue(ball != null ? transform.position - ball.transform.position : Vector3.zero);
-            pastRelativeTeammatePositions.Enqueue(Vector3.zero);
-        }
+        // Initialize the memory sensor
+        memorySensor = new MemoryBasedSensor(this, ball, teammates);
     }
 
     /*
@@ -255,55 +214,9 @@ public class AgentSoccer : Agent
             m_CumulativeDistance = 0f;
         }
 
-        // Safety check before dequeuing
-        if (pastPositions.Count > 0 && ball != null)
-        {
-            // Update memory with the latest position
-            if (pastPositions.Count >= MemorySize)
-            {
-                pastPositions.Dequeue();
-                pastRelativeBallPositions.Dequeue();
-                pastRelativeTeammatePositions.Dequeue();
-            }
-            
-            pastPositions.Enqueue(transform.position);
-
-            // Calculate relative positions with null checks
-            Vector3 relativeBallPosition = ball != null ? 
-                transform.position - ball.transform.position : Vector3.zero;
-            Vector3 relativeTeammatePosition = Vector3.zero;
-            
-            if (teammates != null && teammates.Count > 0)
-            {
-                foreach (var teammate in teammates)
-                {
-                    if (teammate != null && teammate != this)
-                    {
-                        relativeTeammatePosition = transform.position - teammate.transform.position;
-                        break;
-                    }
-                }
-            }
-
-            pastRelativeBallPositions.Enqueue(relativeBallPosition);
-            pastRelativeTeammatePositions.Enqueue(relativeTeammatePosition);
-
-            // Additional rewards only if we have valid data
-            foreach (var pastPosition in pastPositions)
-            {
-                AddReward(Vector3.Distance(transform.position, pastPosition) * 0.01f);
-            }
-
-            foreach (var pastRelativeBallPosition in pastRelativeBallPositions)
-            {
-                AddReward(Vector3.Distance(relativeBallPosition, pastRelativeBallPosition) * 0.01f);
-            }
-
-            foreach (var pastRelativeTeammatePosition in pastRelativeTeammatePositions)
-            {
-                AddReward(Vector3.Distance(relativeTeammatePosition, pastRelativeTeammatePosition) * 0.01f);
-            }
-        }
+        // Update memory sensor and add rewards
+        memorySensor.UpdateMemory();
+        memorySensor.AddMemoryRewards(this);
 
         // Move the agent based on actions
         MoveAgent(actionBuffers.DiscreteActions);
@@ -373,8 +286,6 @@ public class AgentSoccer : Agent
         m_PreviousPosition = transform.position;
         m_CumulativeDistance = 0f;
         // Clear the memory at the beginning of each episode
-        pastPositions.Clear();
-        pastRelativeBallPositions.Clear();
-        pastRelativeTeammatePositions.Clear();
+        memorySensor.ClearMemory();
     }
 }
