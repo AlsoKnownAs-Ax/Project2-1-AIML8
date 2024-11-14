@@ -12,10 +12,6 @@ public enum Team
 public class AgentSoccer : Agent
 {
 
-    [HideInInspector]
-    public Team team;
-    float m_KickPower;
-    float m_BallTouch;
     public enum Position
     {
         Striker,
