@@ -2,16 +2,17 @@ using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Policies;
+using System.Collections.Generic;
 
 public enum Team
-    {
-        Blue = 0,
-        Purple = 1
-    }
+{
+    Blue = 0,
+    Purple = 1
+}
 
 public class AgentSoccer : Agent
 {
-
+    // Enum for player positions
     public enum Position
     {
         Striker,
@@ -26,10 +27,10 @@ public class AgentSoccer : Agent
     float m_BallTouch;
     public Position position;
 
-    const float k_Power = 2000f;
-    float m_Existential;
-    float m_LateralSpeed;
-    float m_ForwardSpeed;
+    const float k_Power = 2000f; // Constant power value
+    float m_Existential; // Existential reward
+    float m_LateralSpeed; // Speed for lateral movement
+    float m_ForwardSpeed; // Speed for forward movement
 
     [HideInInspector]
     public Rigidbody agentRb;
@@ -42,8 +43,31 @@ public class AgentSoccer : Agent
 
     // Hearing Zone integration
     private HearingZone hearingZone;
-    private SphereCollider hearingCollider; 
+    private SphereCollider hearingCollider;
 
+    EnvironmentParameters m_ResetParams; // Environment parameters
+
+    Vector3 m_PreviousPosition; // Previous position of the agent
+    float m_CumulativeDistance; // Cumulative distance moved
+    const float k_DistanceRewardThreshold = 10f; // Distance reward threshold
+    const float k_DistanceReward = 0.1f; // Distance reward
+
+    // Add these new fields at the class level
+    [SerializeField] private GameObject ball; // Reference to the soccer ball
+    [SerializeField] private List<AgentSoccer> teammates; // List of teammate agents
+    private MemoryBasedSensor memorySensor;
+
+    void Start()
+    {
+        // Call OnEpisodeBegin at the start for testing
+        OnEpisodeBegin();
+    }
+
+    /*
+     * Initialize the agent
+     * - Sets up initial parameters and configurations for the agent.
+     * - Initializes the memory queues for past positions and relative positions.
+     */
     public override void Initialize()
     {
         SoccerEnvController envController = GetComponentInParent<SoccerEnvController>();
@@ -57,12 +81,35 @@ public class AgentSoccer : Agent
         }
 
         m_BehaviorParameters = gameObject.GetComponent<BehaviorParameters>();
-        team = m_BehaviorParameters.TeamId == (int)Team.Blue ? Team.Blue : Team.Purple;
-        initialPos = new Vector3(transform.position.x + (team == Team.Blue ? -5f : 5f), 0.5f, transform.position.z);
-        rotSign = team == Team.Blue ? 1f : -1f;
+        if (m_BehaviorParameters.TeamId == (int)Team.Blue)
+        {
+            team = Team.Blue;
+            initialPos = new Vector3(transform.position.x - 5f, .5f, transform.position.z);
+            rotSign = 1f;
+        }
+        else
+        {
+            team = Team.Purple;
+            initialPos = new Vector3(transform.position.x + 5f, .5f, transform.position.z);
+            rotSign = -1f;
+        }
 
-        m_LateralSpeed = position == Position.Goalie ? 1.0f : 0.3f;
-        m_ForwardSpeed = position == Position.Striker ? 1.3f : 1.0f;
+        // Set speed based on position
+        if (position == Position.Goalie)
+        {
+            m_LateralSpeed = 1.0f;
+            m_ForwardSpeed = 1.0f;
+        }
+        else if (position == Position.Striker)
+        {
+            m_LateralSpeed = 0.3f;
+            m_ForwardSpeed = 1.3f;
+        }
+        else
+        {
+            m_LateralSpeed = 0.3f;
+            m_ForwardSpeed = 1.0f;
+        }
 
         m_SoccerSettings = FindObjectOfType<SoccerSettings>();
         agentRb = GetComponent<Rigidbody>();
@@ -84,15 +131,15 @@ public class AgentSoccer : Agent
 
         // Initialize Hearing Zone
         hearingZone = GetComponentInChildren<HearingZone>();
-            if (hearingZone != null)
-            {
-                hearingZone.OnObjectDetected += HandleDetectedObject;
-                Debug.Log("Hearing zone setup complete");
-            }
-            else
-            {
-                Debug.LogWarning("Hearing zone not found"); 
-            }
+        if (hearingZone != null)
+        {
+            hearingZone.OnObjectDetected += HandleDetectedObject;
+            Debug.Log("Hearing zone setup complete");
+        }
+        else
+        {
+            Debug.LogWarning("Hearing zone not found");
+        }
     }
 
     private void HandleDetectedObject(GameObject obj)
@@ -105,11 +152,42 @@ public class AgentSoccer : Agent
         else if (obj.CompareTag("Player"))
         {
             Debug.Log("Player detected in hearing range");
-           
+
             AddReward(0.05f);
         }
+
+        m_PreviousPosition = transform.position;
+        m_CumulativeDistance = 0f;
+
+        // Find the ball if not assigned
+        if (ball == null)
+        {
+            ball = GameObject.FindGameObjectWithTag("ball");
+        }
+
+        // Find teammates if not assigned
+        if (teammates == null || teammates.Count == 0)
+        {
+            teammates = new List<AgentSoccer>();
+            var allAgents = FindObjectsOfType<AgentSoccer>();
+            foreach (var agent in allAgents)
+            {
+                if (agent != this && agent.team == this.team)
+                {
+                    teammates.Add(agent);
+                }
+            }
+        }
+
+        // Initialize the memory sensor
+        memorySensor = new MemoryBasedSensor(this, ball, teammates);
     }
 
+    /*
+     * Move the agent based on actions
+     * - Determines the direction and rotation based on the action inputs.
+     * - Applies the movement and rotation to the agent.
+     */
     public void MoveAgent(ActionSegment<int> act)
     {
         var dirToGo = Vector3.zero;
@@ -121,6 +199,7 @@ public class AgentSoccer : Agent
         var rightAxis = act[1];
         var rotateAxis = act[2];
 
+        // Determine direction based on action
         switch (forwardAxis)
         {
             case 1:
@@ -152,12 +231,20 @@ public class AgentSoccer : Agent
                 break;
         }
 
-        transform.Rotate(rotateDir, Time.deltaTime * 100f);
+        // Apply rotation and force
+        transform.Rotate(rotateDir, Time.deltaTime * 100f)
         agentRb.AddForce(dirToGo * m_SoccerSettings.agentRunSpeed, ForceMode.VelocityChange);
     }
 
+    /*
+     * Called when an action is received
+     * - Updates the agent's state based on received actions.
+     * - Updates the memory with the latest position and relative positions.
+     * - Adds rewards based on the distance to past positions and cumulative distance moved.
+     */
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
+        // Add reward based on position
         if (position == Position.Goalie)
         {
             AddReward(m_Existential); // Existential reward for goalies
@@ -167,25 +254,31 @@ public class AgentSoccer : Agent
             AddReward(-m_Existential); // Existential penalty for strikers
         }
 
-        MoveAgent(actionBuffers.DiscreteActions);
 
-        // Check if the ball is within the agent's vision
-        if (ball != null && visionCone.IsTargetVisible(ball.transform.position))
+        // Calculate distance moved and update cumulative distance
+        float distanceMoved = Vector3.Distance(transform.position, m_PreviousPosition);
+        m_CumulativeDistance += distanceMoved;
+        m_PreviousPosition = transform.position;
+
+        // Reward for moving a cumulative distance of 10 units
+        if (m_CumulativeDistance >= k_DistanceRewardThreshold)
         {
-            AddReward(0.1f); // Reward for seeing the ball
-
-            // Optional: Adjust movement behavior based on ball visibility
-            Vector3 directionToBall = (ball.transform.position - transform.position).normalized;
-            MoveAgentToward(directionToBall);
+            AddReward(k_DistanceReward); // Reward of 0.1
+            m_CumulativeDistance = 0f;
         }
+
+        // Update memory sensor and add rewards
+        memorySensor.UpdateMemory();
+        memorySensor.AddMemoryRewards(this);
+
+        // Move the agent based on actions
+        MoveAgent(actionBuffers.DiscreteActions);
     }
 
-    private void MoveAgentToward(Vector3 direction)
-    {
-        var dirToGo = direction * m_ForwardSpeed;
-        agentRb.AddForce(dirToGo * m_SoccerSettings.agentRunSpeed, ForceMode.VelocityChange);
-    }
-
+    /*
+     * Provide heuristic actions for testing
+     * - Allows manual control of the agent using keyboard inputs.
+     */
     public override void Heuristic(in ActionBuffers actionsOut)
     {
         var discreteActionsOut = actionsOut.DiscreteActions;
@@ -214,8 +307,9 @@ public class AgentSoccer : Agent
             discreteActionsOut[1] = 2;
         }
     }
-
-
+    /// <summary>
+    /// Used to provide a "kick" to the ball.
+    /// </summary>
     void OnCollisionEnter(Collision c)
     {
         var force = k_Power * m_KickPower;
@@ -232,8 +326,16 @@ public class AgentSoccer : Agent
         }
     }
 
+    /*
+     * Called at the beginning of each episode
+     * - Resets the agent's state and clears the memory.
+     */
     public override void OnEpisodeBegin()
     {
         m_BallTouch = m_ResetParams.GetWithDefault("ball_touch", 0);
+        m_PreviousPosition = transform.position;
+        m_CumulativeDistance = 0f;
+        // Clear the memory at the beginning of each episode
+        memorySensor.ClearMemory();
     }
 }
