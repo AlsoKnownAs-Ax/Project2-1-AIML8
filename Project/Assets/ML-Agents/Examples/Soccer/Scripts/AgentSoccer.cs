@@ -10,6 +10,13 @@ public enum Team
     Purple = 1
 }
 
+public enum SensorType
+{
+    VisionCone,
+    HearingZone,
+    MemoryBasedSensor
+}
+
 public class AgentSoccer : Agent
 {
     // Enum for player positions
@@ -31,6 +38,9 @@ public class AgentSoccer : Agent
     float m_LateralSpeed; // Speed for lateral movement
     float m_ForwardSpeed; // Speed for forward movement
 
+    [Header("Used Sensors")]
+    [SerializeField] private List<SensorType> sensors;
+
     [HideInInspector]
     public Rigidbody agentRb;
     SoccerSettings m_SoccerSettings;
@@ -49,7 +59,6 @@ public class AgentSoccer : Agent
     const float k_DistanceRewardThreshold = 10f; // Distance reward threshold
     const float k_DistanceReward = 0.1f; // Distance reward
 
-    // Add these new fields at the class level
     [SerializeField] private GameObject ball; // Reference to the soccer ball
     [SerializeField] private List<AgentSoccer> teammates; // List of teammate agents
     private MemoryBasedSensor memorySensor;
@@ -114,38 +123,7 @@ public class AgentSoccer : Agent
 
         m_ResetParams = Academy.Instance.EnvironmentParameters;
 
-        // Initialize VisionCone
-        visionCone = GetComponent<VisionCone>();
-        if (visionCone == null)
-        {
-            visionCone = gameObject.AddComponent<VisionCone>();
-        }
-
-        visionCone.SetVisionPattern(VisionCone.VisionPattern.Scanning);
-
-        // Find the ball in the environment
-        ball = GameObject.FindGameObjectWithTag("ball");
-
-        // Initialize Hearing Zone
-        hearingZone = GetComponentInChildren<HearingZone>();
-        if (hearingZone != null)
-        {
-            hearingZone.OnObjectDetected += HandleDetectedObject;
-            Debug.Log("Hearing zone setup complete");
-        }
-        else
-        {
-            Debug.LogWarning("Hearing zone not found");
-        }
-
-        memorySensor = GetComponent<MemoryBasedSensor>();
-        if (memorySensor == null)
-        {
-            memorySensor = gameObject.AddComponent<MemoryBasedSensor>();
-        }
-
-        // Initialize the memory sensor
-        memorySensor.InitializeMemoryBasedSensor(this, ball, teammates);
+        AttachSensors(sensors);
     }
 
     private void HandleDetectedObject(GameObject obj)
@@ -270,9 +248,13 @@ public class AgentSoccer : Agent
             m_CumulativeDistance = 0f;
         }
 
-        // Update memory sensor and add rewards
-        memorySensor.UpdateMemory();
-        memorySensor.AddMemoryRewards(this);
+        if (memorySensor != null)
+        {
+            // Update memory sensor and add rewards
+            memorySensor.UpdateMemory();
+            memorySensor.AddMemoryRewards(this);
+            return;
+        }
 
         // Move the agent based on actions
         MoveAgent(actionBuffers.DiscreteActions);
@@ -339,6 +321,97 @@ public class AgentSoccer : Agent
         m_PreviousPosition = transform.position;
         m_CumulativeDistance = 0f;
         // Clear the memory at the beginning of each episode
-        memorySensor.ClearMemory();
+        if (memorySensor != null) memorySensor.ClearMemory();
+    }
+
+    private void InitializeBall()
+    {
+        // Ensure the ball is assigned
+        if (ball == null)
+        {
+            var balls = GameObject.FindGameObjectsWithTag("ball");
+            foreach (var potentialBall in balls)
+            {
+                if (Vector3.Distance(transform.position, potentialBall.transform.position) < 50f) // Adjust the distance threshold as needed
+                {
+                    ball = potentialBall;
+                    break;
+                }
+            }
+            if (ball == null)
+            {
+                Debug.LogWarning("Ball not found in the scene.");
+            }
+        }
+    }
+
+    private void InitializeTeammates()
+    {
+        if (teammates == null || teammates.Count == 0)
+        {
+            teammates = new List<AgentSoccer>();
+            var allAgents = FindObjectsOfType<AgentSoccer>();
+            foreach (var agent in allAgents)
+            {
+                if (agent != this && agent.team == this.team && Vector3.Distance(transform.position, agent.transform.position) < 50f) // Adjust the distance threshold as needed
+                {
+                    teammates.Add(agent);
+                }
+            }
+            if (teammates.Count == 0)
+            {
+                Debug.LogWarning("No teammates found for the agent.");
+            }
+        }
+    }
+
+    private void AttachSensors(List<SensorType> selectedSensors)
+    {
+        foreach (var sensor in selectedSensors)
+        {
+            switch (sensor)
+            {
+                case SensorType.VisionCone:
+                    visionCone = GetComponent<VisionCone>();
+                    if (visionCone == null)
+                    {
+                        visionCone = gameObject.AddComponent<VisionCone>();
+                    }
+                    visionCone.SetVisionPattern(VisionCone.VisionPattern.Scanning);
+                    Debug.Log("visionCone Sensor attached");
+
+                    break;
+
+                case SensorType.HearingZone:
+                    hearingZone = GetComponentInChildren<HearingZone>();
+                    if (hearingZone != null)
+                    {
+                        hearingZone.OnObjectDetected += HandleDetectedObject;
+                        Debug.Log("Hearing sensor attached");
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Hearing zone not found");
+                    }
+                    break;
+
+                case SensorType.MemoryBasedSensor:
+                    memorySensor = GetComponent<MemoryBasedSensor>();
+                    if (memorySensor == null)
+                    {
+                        memorySensor = gameObject.AddComponent<MemoryBasedSensor>();
+                    }
+                    //Make sure the ball and teammates are assigned
+                    InitializeBall();
+                    InitializeTeammates();
+
+                    if (ball == null) Debug.LogWarning("Ball not assigned");
+                    if (teammates == null || teammates.Count == 0) Debug.LogWarning("Teammates not assigned");
+
+                    memorySensor.InitializeMemoryBasedSensor(this, ball, teammates);
+                    Debug.Log("MemoryBased Sensor attached");
+                    break;
+            }
+        }
     }
 }
