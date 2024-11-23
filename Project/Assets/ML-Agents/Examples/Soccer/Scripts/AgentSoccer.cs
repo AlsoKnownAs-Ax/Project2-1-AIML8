@@ -63,6 +63,9 @@ public class AgentSoccer : Agent
     [SerializeField] private List<AgentSoccer> teammates; // List of teammate agents
     private MemoryBasedSensor memorySensor;
 
+    private Vector3 perceivedBallPosition;
+    private Dictionary<AgentSoccer, Vector3> perceivedTeammatePositions = new Dictionary<AgentSoccer, Vector3>();
+
     void Start()
     {
         // Call OnEpisodeBegin at the start for testing
@@ -126,18 +129,21 @@ public class AgentSoccer : Agent
         AttachSensors(sensors);
     }
 
-    private void HandleDetectedObject(GameObject obj)
+    private void HandleDetectedObject(GameObject obj, Vector3 perceivedPosition)
     {
         if (obj.CompareTag("ball"))
         {
-            Debug.Log("Ball detected in hearing range");
-            AddReward(0.1f); // Reward for detecting the ball
+            Debug.Log($"Ball detected in hearing range at perceived position: {perceivedPosition}");
+            perceivedBallPosition = perceivedPosition;
         }
         else if (obj.CompareTag("Player"))
         {
-            Debug.Log("Player detected in hearing range");
-
-            AddReward(0.05f);
+            Debug.Log($"Player detected in hearing range at perceived position: {perceivedPosition}");
+            var agent = obj.GetComponent<AgentSoccer>();
+            if (agent != null && agent.team == this.team)
+            {
+                perceivedTeammatePositions[agent] = perceivedPosition;
+            }
         }
 
         m_PreviousPosition = transform.position;
@@ -181,35 +187,52 @@ public class AgentSoccer : Agent
         var rotateAxis = act[2];
 
         // Determine direction based on action
-        switch (forwardAxis)
-        {
-            case 1:
-                dirToGo = transform.forward * m_ForwardSpeed;
-                m_KickPower = 1f;
-                break;
-            case 2:
-                dirToGo = transform.forward * -m_ForwardSpeed;
-                break;
+        bool isHearingSensorActive = false;
+        if (hearingZone != null) {
+            isHearingSensorActive = true;
         }
+        if (!isHearingSensorActive)
+            {
+                // Determine direction based on action (only if hearing sensor is not active)
+                switch (forwardAxis)
+                {
+                    case 1:
+                        dirToGo = transform.forward * m_ForwardSpeed;
+                        m_KickPower = 1f;
+                        break;
 
-        switch (rightAxis)
-        {
-            case 1:
-                dirToGo = transform.right * m_LateralSpeed;
-                break;
-            case 2:
-                dirToGo = transform.right * -m_LateralSpeed;
-                break;
-        }
+                    case 2:
+                        dirToGo = transform.forward * -m_ForwardSpeed;
+                        break;
+                }
 
-        switch (rotateAxis)
+                switch (rightAxis)
+                {
+                    case 1:
+                        dirToGo = transform.right * m_LateralSpeed;
+                        break;
+                    case 2:
+                        dirToGo = transform.right * -m_LateralSpeed;
+                        break;
+                }
+
+                switch (rotateAxis)
+                {
+                    case 1:
+                        rotateDir = transform.up * -1f;
+                        break;
+                    case 2:
+                        rotateDir = transform.up * 1f;
+                        break;
+                }
+            }
+
+        var test = m_LateralSpeed;
+
+        if (isHearingSensorActive)
         {
-            case 1:
-                rotateDir = transform.up * -1f;
-                break;
-            case 2:
-                rotateDir = transform.up * 1f;
-                break;
+            Vector3 directionToBall = (perceivedBallPosition - transform.position).normalized;
+            dirToGo += directionToBall * m_ForwardSpeed;
         }
 
         // Apply rotation and force
@@ -388,6 +411,18 @@ public class AgentSoccer : Agent
                     {
                         hearingZone.OnObjectDetected += HandleDetectedObject;
                         Debug.Log("Hearing sensor attached");
+
+                        SphereCollider hearingCollider = hearingZone.GetComponent<SphereCollider>();
+                        if (hearingCollider != null)
+                        {
+                            // Adjust the hearing range here (for example, doubling the radius)
+                            hearingCollider.radius = 10000f; // Adjust this value as needed
+                            Debug.Log("Hearing zone radius set to: " + hearingCollider.radius);
+                        }
+                        else
+                        {
+                            Debug.LogWarning("Hearing zone collider not found");
+                        }
                     }
                     else
                     {
