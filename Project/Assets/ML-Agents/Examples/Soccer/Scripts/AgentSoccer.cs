@@ -407,7 +407,8 @@ public class AgentSoccer : Agent
                     if (ball == null) Debug.LogWarning("Ball not assigned");
                     if (teammates == null || teammates.Count == 0) Debug.LogWarning("Teammates not assigned");
 
-                    memorySensor.InitializeMemoryBasedSensor(this, ball, teammates);
+                    //memorySensor.InitializeMemoryBasedSensor(this, ball, teammates);
+                    memorySensor.InitializeSensor(this, ball, teammates);
                     Debug.Log("MemoryBased Sensor attached");
                     break;
             }

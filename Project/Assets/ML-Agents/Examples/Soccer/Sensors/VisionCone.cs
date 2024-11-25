@@ -1,7 +1,8 @@
 using UnityEngine;
 using System.Collections;
+using Unity.MLAgents.Sensors;
 
-public class VisionCone : MonoBehaviour
+public class VisionCone : MonoBehaviour, ISensor, ISoccerSensor
 {
     [Header("Vision Settings")]
     [SerializeField] private float viewRadius = 10f;
@@ -27,6 +28,10 @@ public class VisionCone : MonoBehaviour
         Scanning, Random
     }
 
+    private AgentSoccer agent;
+    private GameObject ball;
+    private System.Collections.Generic.List<AgentSoccer> teammates;
+
     private void Awake()
     {
         agentTransform = transform;
@@ -51,30 +56,108 @@ public class VisionCone : MonoBehaviour
             patternCoroutine = StartCoroutine(RandomPattern());
     }
 
-private IEnumerator ScanningPattern()
-{
-    float scanAngle = 0f;
-    bool scanningRight = true;
-
-    while (true)
+    public void InitializeSensor(AgentSoccer agent, GameObject ball, System.Collections.Generic.List<AgentSoccer> teammates)
     {
-        // Calculate the angle increment based on the direction of scanning
-        float angleIncrement = (scanningRight ? 1 : -1) * maxRotationSpeed * Time.deltaTime;
-        scanAngle += angleIncrement;
-
-        // Check if the scan angle has reached the maximum angle change
-        if (Mathf.Abs(scanAngle) >= maxAngleChange)
-        {
-            // Reverse the scanning direction
-            scanningRight = !scanningRight;
-            // Ensure the scan angle stays within the bounds
-            scanAngle = Mathf.Clamp(scanAngle, -maxAngleChange, maxAngleChange);
-        }
-
-        UpdateVisionDirection(scanAngle);
-        yield return null;
+        this.agent = agent;
+        this.ball = ball;
+        this.teammates = teammates;
     }
-}
+
+    public void UpdateSensor()
+    {
+        // Update vision logic is already handled in existing coroutines
+    }
+
+    public void Reset()
+    {
+        if (patternCoroutine != null)
+            StopCoroutine(patternCoroutine);
+        SetVisionPattern(currentPattern);
+    }
+
+    // ISensor Implementation
+    public string GetName()
+    {
+        return "VisionCone";
+    }
+
+    public int[] GetObservationShape()
+    {
+        return new int[] { 4 }; // [isTargetVisible, angleToTarget, distanceToTarget, hasLineOfSight]
+    }
+
+    public byte[] GetCompressedObservation()
+    {
+        return null;
+    }
+
+    public int Write(ObservationWriter writer)
+    {
+        int index = 0;
+        if (ball != null)
+        {
+            Vector3 directionToTarget = (ball.transform.position - agent.transform.position).normalized;
+            float angleToTarget = Vector3.Angle(visionDirection, directionToTarget);
+            float distanceToTarget = Vector3.Distance(agent.transform.position, ball.transform.position);
+            bool hasLineOfSight = !Physics.Raycast(agent.transform.position, directionToTarget, distanceToTarget, obstacleMask);
+            bool isVisible = IsTargetVisible(ball.transform.position);
+
+            writer[index++] = isVisible ? 1f : 0f;
+            writer[index++] = angleToTarget / 180f;
+            writer[index++] = distanceToTarget / viewRadius;
+            writer[index++] = hasLineOfSight ? 1f : 0f;
+        }
+        else
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                writer[index++] = 0f;
+            }
+        }
+        return 4;
+    }
+
+    public void Update() { }
+
+    public void Reset(bool sentSignal) 
+    {
+        Reset();
+    }
+
+    public CompressionSpec GetCompressionSpec()
+    {
+        return CompressionSpec.Default();
+    }
+
+    public ObservationSpec GetObservationSpec()
+    {
+        return ObservationSpec.Vector(4);
+    }
+
+    private IEnumerator ScanningPattern()
+    {
+        float scanAngle = 0f;
+        bool scanningRight = true;
+
+        while (true)
+        {
+            // Calculate the angle increment based on the direction of scanning
+            float angleIncrement = (scanningRight ? 1 : -1) * maxRotationSpeed * Time.deltaTime;
+            scanAngle += angleIncrement;
+
+            // Check if the scan angle has reached the maximum angle change
+            if (Mathf.Abs(scanAngle) >= maxAngleChange)
+            {
+                // Reverse the scanning direction
+                scanningRight = !scanningRight;
+                // Ensure the scan angle stays within the bounds
+                scanAngle = Mathf.Clamp(scanAngle, -maxAngleChange, maxAngleChange);
+            }
+
+            UpdateVisionDirection(scanAngle);
+            yield return null;
+        }
+    }
 
     private IEnumerator RandomPattern()
     {
