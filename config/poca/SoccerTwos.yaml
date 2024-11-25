@@ -15,6 +15,18 @@ behaviors:
       hidden_units: 512
       num_layers: 2
       vis_encode_type: simple
+      sensors:  # Configuration for all sensors
+        - name: "VisionCone"
+          encoding: "simple"
+          output_size: 64  # Processes 4 input floats
+        - name: "HearingZone"
+          encoding: "simple"
+          output_size: 64  # Processes 8 input floats
+        - name: "MemoryBasedSensor"
+          encoding: "simple"
+          output_size: 128  # Processes 90 input floats (10*3*3)
+          memory_size: 256  # Memory settings moved here
+          sequence_length: 10
     reward_signals:
       extrinsic:
         gamma: 0.99
