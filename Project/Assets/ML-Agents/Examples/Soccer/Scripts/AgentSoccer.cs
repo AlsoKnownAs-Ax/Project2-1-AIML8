@@ -253,7 +253,6 @@ public class AgentSoccer : Agent
             // Update memory sensor and add rewards
             memorySensor.UpdateMemory();
             memorySensor.AddMemoryRewards(this);
-            return;
         }
 
         // Move the agent based on actions
