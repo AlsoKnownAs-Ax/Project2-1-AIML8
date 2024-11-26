@@ -49,7 +49,6 @@ public class AgentSoccer : Agent
     public float rotSign;
 
     // Hearing Zone integration
-    private HearingZone hearingZone;
     private SphereCollider hearingCollider;
 
     EnvironmentParameters m_ResetParams; // Environment parameters
@@ -381,18 +380,18 @@ public class AgentSoccer : Agent
 
                     break;
 
-                case SensorType.HearingZone:
-                    hearingZone = GetComponentInChildren<HearingZone>();
-                    if (hearingZone != null)
-                    {
-                        hearingZone.OnObjectDetected += HandleDetectedObject;
-                        Debug.Log("Hearing sensor attached");
-                    }
-                    else
-                    {
-                        Debug.LogWarning("Hearing zone not found");
-                    }
-                    break;
+                // case SensorType.HearingZone:
+                //     hearingZone = GetComponentInChildren<HearingZone>();
+                //     if (hearingZone != null)
+                //     {
+                //         hearingZone.OnObjectDetected += HandleDetectedObject;
+                //         Debug.Log("Hearing sensor attached");
+                //     }
+                //     else
+                //     {
+                //         Debug.LogWarning("Hearing zone not found");
+                //     }
+                //     break;
 
                 case SensorType.MemoryBasedSensor:
                     memorySensor = GetComponent<MemoryBasedSensor>();
