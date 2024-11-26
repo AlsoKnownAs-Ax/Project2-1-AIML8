@@ -408,14 +408,13 @@ public class AgentSoccer : Agent
                     hearingZone = GetComponentInChildren<HearingZone>();
                     if (hearingZone != null)
                     {
-                        hearingZone.OnObjectDetected += HandleDetectedObject;
+                        // hearingZone.OnObjectDetected += HandleDetectedObject;
                         Debug.Log("Hearing sensor attached");
 
                         SphereCollider hearingCollider = hearingZone.GetComponent<SphereCollider>();
                         if (hearingCollider != null)
                         {
-                            // Adjust the hearing range here (for example, doubling the radius)
-                            hearingCollider.radius = 10000f; // Adjust this value as needed
+                            hearingCollider.radius = 10000f;
                             Debug.Log("Hearing zone radius set to: " + hearingCollider.radius);
                         }
                         else

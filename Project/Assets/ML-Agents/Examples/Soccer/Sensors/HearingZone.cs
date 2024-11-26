@@ -3,15 +3,17 @@ using Unity.MLAgents.Sensors;
 
 public class HearingZone : MonoBehaviour, ISensor, ISoccerSensor
 {
-    public delegate void ObjectDetected(GameObject obj, Vector3 perceivedPosition);
+    // public delegate void ObjectDetected(GameObject obj, Vector3 perceivedPosition);
+    public delegate void ObjectDetected(GameObject obj);
+
     public event ObjectDetected OnObjectDetected;
 
-    public float detectionRadius = 10f;
 
-    private void Start()
-    {
-        StartCoroutine(DetectObjectsInRange());
-    }
+    // public float detectionRadius = 10f;
+    // private void Start()
+    // {
+    //     StartCoroutine(DetectObjectsInRange());
+    // }
 
     // private IEnumerator DetectObjectsInRange()
     // {
@@ -136,10 +138,16 @@ public class HearingZone : MonoBehaviour, ISensor, ISoccerSensor
         OnObjectDetected?.Invoke(other.gameObject);
     }
 
-    //Enable if you want to see detection radiuses on screen
-    // private void OnDrawGizmos()
-    // {
-    //     Gizmos.color = Color.green;
-    //     Gizmos.DrawWireSphere(transform.position, detectionRadius);
-    // }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("ball"))
+        {
+            ballDetected = false;
+        }
+        else if (other.CompareTag("Player"))
+        {
+            playerDetected = false;
+        }
+    }
 }
