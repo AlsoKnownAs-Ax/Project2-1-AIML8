@@ -1,12 +1,13 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Unity.MLAgents.Sensors;
 
-public class MemoryBasedSensor : MonoBehaviour
+public class MemoryBasedSensor : MonoBehaviour, ISensor, ISoccerSensor
 {
-     [Header("Memory Settings")]
+    [Header("Memory Settings")]
 
     [SerializeField] private int MemorySize = 10;
-    private const float k_DistanceRewardThreshold = 10f;
+    //private const float k_DistanceRewardThreshold = 10f;
     private const float k_DistanceReward = 0.1f;
 
     private AgentSoccer agent;
@@ -33,7 +34,7 @@ public class MemoryBasedSensor : MonoBehaviour
     //     InitializeMemory();
     // }
 
-    public void InitializeMemoryBasedSensor(AgentSoccer agent, GameObject ball, List<AgentSoccer> teammates)
+    public void InitializeSensor(AgentSoccer agent, GameObject ball, List<AgentSoccer> teammates)
     {
         this.agent = agent;
         this.ball = ball;
@@ -92,18 +93,18 @@ public class MemoryBasedSensor : MonoBehaviour
         pastRelativeBallPositions.Enqueue(relativeBallPosition);
         pastRelativeTeammatePositions.Enqueue(relativeTeammatePosition);
 
-        Debug.Log($"Agent Position: {agent.transform.position}");
-        Debug.Log($"Relative Ball Position: {relativeBallPosition}");
-        Debug.Log($"Relative Teammate Position: {relativeTeammatePosition}");
+        // Debug.Log($"Agent Position: {agent.transform.position}");
+        // Debug.Log($"Relative Ball Position: {relativeBallPosition}");
+        // Debug.Log($"Relative Teammate Position: {relativeTeammatePosition}");
     }
 
     public void AddMemoryRewards(AgentSoccer agent)
     {
-        if (cumulativeDistance >= k_DistanceRewardThreshold)
+       /* if (cumulativeDistance >= k_DistanceRewardThreshold)
         {
             agent.AddReward(k_DistanceReward);
             cumulativeDistance = 0f;
-        }
+        }*/
 
         foreach (var pastPosition in pastPositions)
         {
@@ -120,7 +121,6 @@ public class MemoryBasedSensor : MonoBehaviour
             agent.AddReward(Vector3.Distance(agent.transform.position - pastRelativeTeammatePosition, pastRelativeTeammatePosition) * 0.01f);
         }
 
-        Debug.Log($"Cumulative Distance: {cumulativeDistance}");
     }
 
     public void ClearMemory()
@@ -128,5 +128,76 @@ public class MemoryBasedSensor : MonoBehaviour
         pastPositions.Clear();
         pastRelativeBallPositions.Clear();
         pastRelativeTeammatePositions.Clear();
+    }
+
+    public void UpdateSensor()
+    {
+        UpdateMemory();
+    }
+
+    public void Reset()
+    {
+        ClearMemory();
+        InitializeMemory();
+    }
+
+    // ISensor Implementation
+    public string GetName()
+    {
+        return "MemoryBasedSensor";
+    }
+
+    public int[] GetObservationShape()
+    {
+        return new int[] { MemorySize * 3 * 3 }; // 3 vectors (position, ball, teammate) * 3 components (x,y,z) per memory entry
+    }
+
+    public byte[] GetCompressedObservation()
+    {
+        return null;
+    }
+
+    public int Write(ObservationWriter writer)
+    {
+        int index = 0;
+        foreach (var position in pastPositions)
+        {
+            writer[index++] = position.x;
+            writer[index++] = position.y;
+            writer[index++] = position.z;
+        }
+
+        foreach (var ballPos in pastRelativeBallPositions)
+        {
+            writer[index++] = ballPos.x;
+            writer[index++] = ballPos.y;
+            writer[index++] = ballPos.z;
+        }
+
+        foreach (var teammatePos in pastRelativeTeammatePositions)
+        {
+            writer[index++] = teammatePos.x;
+            writer[index++] = teammatePos.y;
+            writer[index++] = teammatePos.z;
+        }
+
+        return MemorySize * 3 * 3;
+    }
+
+    public void Update() { }
+
+    public void Reset(bool sentSignal)
+    {
+        Reset();
+    }
+
+    public CompressionSpec GetCompressionSpec()
+    {
+        return CompressionSpec.Default();
+    }
+
+    public ObservationSpec GetObservationSpec()
+    {
+        return ObservationSpec.Vector(MemorySize * 3 * 3);
     }
 }
