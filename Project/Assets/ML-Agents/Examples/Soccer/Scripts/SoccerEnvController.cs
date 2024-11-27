@@ -67,8 +67,7 @@ public class SoccerEnvController : MonoBehaviour
                 switch (sensor)
                 {
                 case SensorType.SoundSensor:
-                    item.Agent.addSensorToAgent("SoundSensor");
-                    // item.Agent.gameObject.AddComponent<HearingSensorComponent>(); 
+                    item.Agent.gameObject.AddComponent<HearingSensorComponent>(); 
                     break;
                 }
             }
