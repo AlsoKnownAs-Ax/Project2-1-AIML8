@@ -13,8 +13,8 @@ public enum Team
 public enum SensorType
 {
     VisionCone,
-    HearingZone,
-    MemoryBasedSensor
+    MemoryBasedSensor,
+    SoundSensor
 }
 
 public class AgentSoccer : Agent
@@ -48,8 +48,6 @@ public class AgentSoccer : Agent
     public Vector3 initialPos;
     public float rotSign;
 
-    // Hearing Zone integration
-    private SphereCollider hearingCollider;
 
     EnvironmentParameters m_ResetParams; // Environment parameters
 
@@ -125,43 +123,44 @@ public class AgentSoccer : Agent
         AttachSensors(sensors);
     }
 
-    private void HandleDetectedObject(GameObject obj)
-    {
-        if (obj.CompareTag("ball"))
-        {
-            Debug.Log("Ball detected in hearing range");
-            AddReward(0.1f); // Reward for detecting the ball
-        }
-        else if (obj.CompareTag("Player"))
-        {
-            Debug.Log("Player detected in hearing range");
+    //Redundant code
+    // private void HandleDetectedObject(GameObject obj)
+    // {
+    //     if (obj.CompareTag("ball"))
+    //     {
+    //         Debug.Log("Ball detected in hearing range");
+    //         AddReward(0.1f); // Reward for detecting the ball
+    //     }
+    //     else if (obj.CompareTag("Player"))
+    //     {
+    //         Debug.Log("Player detected in hearing range");
 
-            AddReward(0.05f);
-        }
+    //         AddReward(0.05f);
+    //     }
 
-        m_PreviousPosition = transform.position;
-        m_CumulativeDistance = 0f;
+    //     m_PreviousPosition = transform.position;
+    //     m_CumulativeDistance = 0f;
 
-        // Find the ball if not assigned
-        if (ball == null)
-        {
-            ball = GameObject.FindGameObjectWithTag("ball");
-        }
+    //     // Find the ball if not assigned
+    //     if (ball == null)
+    //     {
+    //         ball = GameObject.FindGameObjectWithTag("ball");
+    //     }
 
-        // Find teammates if not assigned
-        if (teammates == null || teammates.Count == 0)
-        {
-            teammates = new List<AgentSoccer>();
-            var allAgents = FindObjectsOfType<AgentSoccer>();
-            foreach (var agent in allAgents)
-            {
-                if (agent != this && agent.team == this.team)
-                {
-                    teammates.Add(agent);
-                }
-            }
-        }
-    }
+    //     // Find teammates if not assigned
+    //     if (teammates == null || teammates.Count == 0)
+    //     {
+    //         teammates = new List<AgentSoccer>();
+    //         var allAgents = FindObjectsOfType<AgentSoccer>();
+    //         foreach (var agent in allAgents)
+    //         {
+    //             if (agent != this && agent.team == this.team)
+    //             {
+    //                 teammates.Add(agent);
+    //             }
+    //         }
+    //     }
+    // }
 
     /*
      * Move the agent based on actions
@@ -363,10 +362,20 @@ public class AgentSoccer : Agent
         }
     }
 
+    public void addSensorToAgent(string sensor) {
+        switch (sensor) {
+            case "SoundSensor":
+                gameObject.AddComponent<HearingSensorComponent>();
+                break;
+        }
+
+    }
+
     private void AttachSensors(List<SensorType> selectedSensors)
     {
         foreach (var sensor in selectedSensors)
         {
+            Debug.Log(sensor); 
             switch (sensor)
             {
                 case SensorType.VisionCone:
@@ -379,6 +388,10 @@ public class AgentSoccer : Agent
                     Debug.Log("visionCone Sensor attached");
 
                     break;
+                
+                // case SensorType.SoundSensor:
+                //     gameObject.AddComponent<HearingSensorComponent>(); 
+                //     break;
 
                 // case SensorType.HearingZone:
                 //     hearingZone = GetComponentInChildren<HearingZone>();

@@ -38,6 +38,11 @@ public class SoccerEnvController : MonoBehaviour
 
     //List of Agents On Platform
     public List<PlayerInfo> AgentsList = new List<PlayerInfo>();
+    [SerializeField] private List<SensorType> selectedSensors;
+    public enum SensorType {
+        SoundSensor
+    }
+
 
     private SoccerSettings m_SoccerSettings;
 
@@ -58,6 +63,15 @@ public class SoccerEnvController : MonoBehaviour
         m_BallStartingPos = new Vector3(ball.transform.position.x, ball.transform.position.y, ball.transform.position.z);
         foreach (var item in AgentsList)
         {
+            foreach (var sensor in selectedSensors) {
+                switch (sensor)
+                {
+                case SensorType.SoundSensor:
+                    item.Agent.addSensorToAgent("SoundSensor");
+                    // item.Agent.gameObject.AddComponent<HearingSensorComponent>(); 
+                    break;
+                }
+            }
             item.StartingPos = item.Agent.transform.position;
             item.StartingRot = item.Agent.transform.rotation;
             item.Rb = item.Agent.GetComponent<Rigidbody>();
