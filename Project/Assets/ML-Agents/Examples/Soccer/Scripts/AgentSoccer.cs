@@ -233,24 +233,21 @@ public class AgentSoccer : Agent
             AddReward(-m_Existential); // Existential penalty for strikers
         }
 
-
         // Calculate distance moved and update cumulative distance
         float distanceMoved = Vector3.Distance(transform.position, m_PreviousPosition);
         m_CumulativeDistance += distanceMoved;
         m_PreviousPosition = transform.position;
 
-        // Reward for moving a cumulative distance of 10 units
+        // Reset cumulative distance without adding rewards
         if (m_CumulativeDistance >= k_DistanceRewardThreshold)
         {
-            AddReward(k_DistanceReward); // Reward of 0.1
             m_CumulativeDistance = 0f;
         }
 
-        if (memorySensor != null)
+        // Update all sensors without adding rewards
+        foreach (var sensor in attachedSensors)
         {
-            // Update memory sensor and add rewards
-            memorySensor.UpdateMemory();
-            memorySensor.AddMemoryRewards(this);
+            sensor.UpdateSensor();
         }
 
         // Move the agent based on actions
@@ -362,8 +359,10 @@ public class AgentSoccer : Agent
         }
     }
 
-    public void addSensorToAgent(string sensor) {
-        switch (sensor) {
+    public void addSensorToAgent(string sensor)
+    {
+        switch (sensor)
+        {
             case "SoundSensor":
                 gameObject.AddComponent<HearingSensorComponent>();
                 break;
@@ -375,7 +374,7 @@ public class AgentSoccer : Agent
     {
         foreach (var sensor in selectedSensors)
         {
-            Debug.Log(sensor); 
+            Debug.Log(sensor);
             switch (sensor)
             {
                 case SensorType.VisionCone:
@@ -388,7 +387,7 @@ public class AgentSoccer : Agent
                     Debug.Log("visionCone Sensor attached");
 
                     break;
-                
+
                 // case SensorType.SoundSensor:
                 //     gameObject.AddComponent<HearingSensorComponent>(); 
                 //     break;

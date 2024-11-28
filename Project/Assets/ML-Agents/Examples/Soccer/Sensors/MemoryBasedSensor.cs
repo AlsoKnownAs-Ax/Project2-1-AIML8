@@ -98,31 +98,6 @@ public class MemoryBasedSensor : MonoBehaviour, ISensor, ISoccerSensor
         // Debug.Log($"Relative Teammate Position: {relativeTeammatePosition}");
     }
 
-    public void AddMemoryRewards(AgentSoccer agent)
-    {
-       /* if (cumulativeDistance >= k_DistanceRewardThreshold)
-        {
-            agent.AddReward(k_DistanceReward);
-            cumulativeDistance = 0f;
-        }*/
-
-        foreach (var pastPosition in pastPositions)
-        {
-            agent.AddReward(Vector3.Distance(agent.transform.position, pastPosition) * 0.01f);
-        }
-
-        foreach (var pastRelativeBallPosition in pastRelativeBallPositions)
-        {
-            agent.AddReward(Vector3.Distance(agent.transform.position - ball.transform.position, pastRelativeBallPosition) * 0.01f);
-        }
-
-        foreach (var pastRelativeTeammatePosition in pastRelativeTeammatePositions)
-        {
-            agent.AddReward(Vector3.Distance(agent.transform.position - pastRelativeTeammatePosition, pastRelativeTeammatePosition) * 0.01f);
-        }
-
-    }
-
     public void ClearMemory()
     {
         pastPositions.Clear();
