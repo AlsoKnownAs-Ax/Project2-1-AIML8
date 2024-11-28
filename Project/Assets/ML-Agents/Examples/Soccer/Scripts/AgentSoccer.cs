@@ -119,7 +119,7 @@ public class AgentSoccer : Agent
 
         m_ResetParams = Academy.Instance.EnvironmentParameters;
 
-        AttachSensors(sensors);
+        //AttachSensors(sensors);
     }
 
     /*
@@ -330,7 +330,7 @@ public class AgentSoccer : Agent
         }
     }
 
-    public void addSensorToAgent(string sensor) {
+/*    public void addSensorToAgent(string sensor) {
         switch (sensor) {
             case "SoundSensor":
                 gameObject.AddComponent<HearingSensorComponent>();
@@ -355,6 +355,7 @@ public class AgentSoccer : Agent
         }
     }
 
+
     private ISoccerSensor CreateSensor(SensorType sensorType)
     {
         switch (sensorType)
@@ -374,5 +375,5 @@ public class AgentSoccer : Agent
                 Debug.LogWarning($"Unsupported sensor type: {sensorType}");
                 return null;
         }
-    }
+    }*/
 }

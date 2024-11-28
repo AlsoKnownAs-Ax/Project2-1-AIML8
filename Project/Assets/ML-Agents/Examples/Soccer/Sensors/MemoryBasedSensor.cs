@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using Unity.MLAgents.Sensors;
 
-public class MemoryBasedSensor : MonoBehaviour, ISensor, ISoccerSensor
+public class MemoryBasedSensor : ISensor
 {
     [Header("Memory Settings")]
 
