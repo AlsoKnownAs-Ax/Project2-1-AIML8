@@ -223,32 +223,31 @@ public class AgentSoccer : Agent
      */
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
-        // Add reward based on position
+        // Base rewards that apply to all agents
         if (position == Position.Goalie)
         {
-            AddReward(m_Existential); // Existential reward for goalies
+            AddReward(m_Existential);
         }
         else if (position == Position.Striker)
         {
-            AddReward(-m_Existential); // Existential penalty for strikers
+            AddReward(-m_Existential);
         }
 
-
-        // Calculate distance moved and update cumulative distance
+        // Calculate distance moved and update cumulative distance - basic movement reward
         float distanceMoved = Vector3.Distance(transform.position, m_PreviousPosition);
         m_CumulativeDistance += distanceMoved;
         m_PreviousPosition = transform.position;
 
-        // Reward for moving a cumulative distance of 10 units
+        // Basic distance reward that applies to all agents
         if (m_CumulativeDistance >= k_DistanceRewardThreshold)
         {
-            AddReward(k_DistanceReward); // Reward of 0.1
+            AddReward(k_DistanceReward);
             m_CumulativeDistance = 0f;
         }
 
-        if (memorySensor != null)
+        // Memory-specific rewards only if memory sensor is enabled
+        if (sensors.Contains(SensorType.MemoryBasedSensor) && memorySensor != null)
         {
-            // Update memory sensor and add rewards
             memorySensor.UpdateMemory();
             memorySensor.AddMemoryRewards(this);
         }
