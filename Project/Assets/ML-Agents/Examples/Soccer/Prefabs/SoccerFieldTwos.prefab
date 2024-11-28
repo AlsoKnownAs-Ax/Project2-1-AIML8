@@ -2188,6 +2188,7 @@ GameObject:
   - component: {fileID: 114320493772006642}
   - component: {fileID: 9152743230243588598}
   - component: {fileID: 798330825103180240}
+  - component: {fileID: 1814292499589163035}
   m_Layer: 0
   m_Name: PurpleStriker
   m_TagString: purpleAgent
@@ -2282,7 +2283,7 @@ MonoBehaviour:
     VectorActionDescriptions: []
     VectorActionSpaceType: 0
     hasUpgradedBrainParametersWithActionSpec: 1
-  m_Model: {fileID: 5022602860645237092, guid: 8cd4584c2f2cb4c5fb51675d364e10ec, type: 3}
+  m_Model: {fileID: 5022602860645237092, guid: e494144d05350948eaf3d5e58edb5245, type: 3}
   m_InferenceDevice: 2
   m_BehaviorType: 0
   m_BehaviorName: SoccerTwos
@@ -2377,6 +2378,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   debugCommandLineOverride: 
+--- !u!114 &1814292499589163035
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1095606497496374}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 886abffb094844f96922035fb5099b13, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1101518129530804
 GameObject:
   m_ObjectHideFlags: 0
@@ -2476,6 +2489,7 @@ GameObject:
   - component: {fileID: 114516244030127556}
   - component: {fileID: 404683423509059512}
   - component: {fileID: 8557426429796011212}
+  - component: {fileID: 2883965125852162110}
   m_Layer: 0
   m_Name: BlueStriker
   m_TagString: blueAgent
@@ -2570,7 +2584,7 @@ MonoBehaviour:
     VectorActionDescriptions: []
     VectorActionSpaceType: 0
     hasUpgradedBrainParametersWithActionSpec: 1
-  m_Model: {fileID: 5022602860645237092, guid: 8cd4584c2f2cb4c5fb51675d364e10ec, type: 3}
+  m_Model: {fileID: 5022602860645237092, guid: e494144d05350948eaf3d5e58edb5245, type: 3}
   m_InferenceDevice: 2
   m_BehaviorType: 0
   m_BehaviorName: SoccerTwos
@@ -2665,6 +2679,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   debugCommandLineOverride: 
+--- !u!114 &2883965125852162110
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1131626411948014}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 886abffb094844f96922035fb5099b13, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1141134673700168
 GameObject:
   m_ObjectHideFlags: 0
@@ -4635,6 +4661,7 @@ GameObject:
   - component: {fileID: 1023485123796557062}
   - component: {fileID: 8734522883866558980}
   - component: {fileID: 6283479335904612434}
+  - component: {fileID: 4868227152526882967}
   m_Layer: 0
   m_Name: PurpleStriker (1)
   m_TagString: purpleAgent
@@ -4729,7 +4756,7 @@ MonoBehaviour:
     VectorActionDescriptions: []
     VectorActionSpaceType: 0
     hasUpgradedBrainParametersWithActionSpec: 1
-  m_Model: {fileID: 5022602860645237092, guid: 8cd4584c2f2cb4c5fb51675d364e10ec, type: 3}
+  m_Model: {fileID: 5022602860645237092, guid: e494144d05350948eaf3d5e58edb5245, type: 3}
   m_InferenceDevice: 2
   m_BehaviorType: 0
   m_BehaviorName: SoccerTwos
@@ -4824,6 +4851,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   debugCommandLineOverride: 
+--- !u!114 &4868227152526882967
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6257467487437560250}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 886abffb094844f96922035fb5099b13, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &6442519122303792292
 GameObject:
   m_ObjectHideFlags: 0
@@ -5278,6 +5317,7 @@ GameObject:
   - component: {fileID: 2562571719799803906}
   - component: {fileID: 1018414316889932458}
   - component: {fileID: 6939753220642424022}
+  - component: {fileID: 8291193336591414189}
   m_Layer: 0
   m_Name: BlueStriker (1)
   m_TagString: blueAgent
@@ -5372,7 +5412,7 @@ MonoBehaviour:
     VectorActionDescriptions: []
     VectorActionSpaceType: 0
     hasUpgradedBrainParametersWithActionSpec: 1
-  m_Model: {fileID: 5022602860645237092, guid: 8cd4584c2f2cb4c5fb51675d364e10ec, type: 3}
+  m_Model: {fileID: 5022602860645237092, guid: e494144d05350948eaf3d5e58edb5245, type: 3}
   m_InferenceDevice: 2
   m_BehaviorType: 0
   m_BehaviorName: SoccerTwos
@@ -5467,6 +5507,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   debugCommandLineOverride: 
+--- !u!114 &8291193336591414189
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8360301818957399454}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 886abffb094844f96922035fb5099b13, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &8673569163220857793
 GameObject:
   m_ObjectHideFlags: 0

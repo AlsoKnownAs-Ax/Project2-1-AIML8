@@ -359,16 +359,16 @@ public class AgentSoccer : Agent
     {
         switch (sensorType)
         {
-            case SensorType.VisionCone:
-                var visionSensor = gameObject.GetComponent<VisionCone>() ?? gameObject.AddComponent<VisionCone>();
-                visionSensor.SetVisionPattern(VisionCone.VisionPattern.Scanning);
-                return visionSensor;
+            // case SensorType.VisionCone:
+            //     var visionSensor = gameObject.GetComponent<VisionCone>() ?? gameObject.AddComponent<VisionCone>();
+            //     visionSensor.SetVisionPattern(VisionCone.VisionPattern.Scanning);
+            //     return visionSensor;
 
             case SensorType.MemoryBasedSensor:
                 return gameObject.GetComponent<MemoryBasedSensor>() ?? gameObject.AddComponent<MemoryBasedSensor>();
 
-            case SensorType.SoundSensor:
-                return gameObject.GetComponent<HearingSensor>() ?? gameObject.AddComponent<HearingSensor>();
+            // case SensorType.SoundSensor:
+            //     return gameObject.AddComponent<HearingSensor>();
 
             default:
                 Debug.LogWarning($"Unsupported sensor type: {sensorType}");
