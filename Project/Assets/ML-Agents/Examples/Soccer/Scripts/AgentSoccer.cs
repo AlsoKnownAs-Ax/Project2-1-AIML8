@@ -28,7 +28,6 @@ public class AgentSoccer : Agent
     }
 
     public Team team;
-    private VisionCone visionCone;
     float m_KickPower;
     float m_BallTouch;
     public Position position;
@@ -40,6 +39,7 @@ public class AgentSoccer : Agent
 
     [Header("Used Sensors")]
     [SerializeField] private List<SensorType> sensors;
+    private List<ISoccerSensor> activeSensors = new List<ISoccerSensor>();
 
     [HideInInspector]
     public Rigidbody agentRb;
@@ -58,7 +58,6 @@ public class AgentSoccer : Agent
 
     [SerializeField] private GameObject ball; // Reference to the soccer ball
     [SerializeField] private List<AgentSoccer> teammates; // List of teammate agents
-    private MemoryBasedSensor memorySensor;
 
     void Start()
     {
@@ -122,45 +121,6 @@ public class AgentSoccer : Agent
 
         AttachSensors(sensors);
     }
-
-    //Redundant code
-    // private void HandleDetectedObject(GameObject obj)
-    // {
-    //     if (obj.CompareTag("ball"))
-    //     {
-    //         Debug.Log("Ball detected in hearing range");
-    //         AddReward(0.1f); // Reward for detecting the ball
-    //     }
-    //     else if (obj.CompareTag("Player"))
-    //     {
-    //         Debug.Log("Player detected in hearing range");
-
-    //         AddReward(0.05f);
-    //     }
-
-    //     m_PreviousPosition = transform.position;
-    //     m_CumulativeDistance = 0f;
-
-    //     // Find the ball if not assigned
-    //     if (ball == null)
-    //     {
-    //         ball = GameObject.FindGameObjectWithTag("ball");
-    //     }
-
-    //     // Find teammates if not assigned
-    //     if (teammates == null || teammates.Count == 0)
-    //     {
-    //         teammates = new List<AgentSoccer>();
-    //         var allAgents = FindObjectsOfType<AgentSoccer>();
-    //         foreach (var agent in allAgents)
-    //         {
-    //             if (agent != this && agent.team == this.team)
-    //             {
-    //                 teammates.Add(agent);
-    //             }
-    //         }
-    //     }
-    // }
 
     /*
      * Move the agent based on actions
@@ -245,10 +205,16 @@ public class AgentSoccer : Agent
             m_CumulativeDistance = 0f;
         }
 
-        // Memory-specific rewards only if memory sensor is enabled
-        if (sensors.Contains(SensorType.MemoryBasedSensor) && memorySensor != null)
+        // Update all sensors
+        foreach (var sensor in activeSensors)
         {
-            memorySensor.UpdateMemory();
+            sensor.UpdateSensor();
+        }
+
+        // If you need specific sensor behavior, use type checking
+        var memorySensor = activeSensors.Find(s => s is MemoryBasedSensor) as MemoryBasedSensor;
+        if (memorySensor != null && sensors.Contains(SensorType.MemoryBasedSensor))
+        {
             memorySensor.AddMemoryRewards(this);
         }
 
@@ -317,7 +283,10 @@ public class AgentSoccer : Agent
         m_PreviousPosition = transform.position;
         m_CumulativeDistance = 0f;
         // Clear the memory at the beginning of each episode
-        if (memorySensor != null) memorySensor.ClearMemory();
+        foreach (var sensor in activeSensors)
+        {
+            sensor.Reset();
+        }
     }
 
     private void InitializeBall()
@@ -372,57 +341,38 @@ public class AgentSoccer : Agent
 
     private void AttachSensors(List<SensorType> selectedSensors)
     {
-        foreach (var sensor in selectedSensors)
+        foreach (var sensorType in selectedSensors)
         {
-            Debug.Log(sensor); 
-            switch (sensor)
+            ISoccerSensor sensor = CreateSensor(sensorType);
+            if (sensor != null)
             {
-                case SensorType.VisionCone:
-                    visionCone = GetComponent<VisionCone>();
-                    if (visionCone == null)
-                    {
-                        visionCone = gameObject.AddComponent<VisionCone>();
-                    }
-                    visionCone.SetVisionPattern(VisionCone.VisionPattern.Scanning);
-                    Debug.Log("visionCone Sensor attached");
-
-                    break;
-                
-                // case SensorType.SoundSensor:
-                //     gameObject.AddComponent<HearingSensorComponent>(); 
-                //     break;
-
-                // case SensorType.HearingZone:
-                //     hearingZone = GetComponentInChildren<HearingZone>();
-                //     if (hearingZone != null)
-                //     {
-                //         hearingZone.OnObjectDetected += HandleDetectedObject;
-                //         Debug.Log("Hearing sensor attached");
-                //     }
-                //     else
-                //     {
-                //         Debug.LogWarning("Hearing zone not found");
-                //     }
-                //     break;
-
-                case SensorType.MemoryBasedSensor:
-                    memorySensor = GetComponent<MemoryBasedSensor>();
-                    if (memorySensor == null)
-                    {
-                        memorySensor = gameObject.AddComponent<MemoryBasedSensor>();
-                    }
-                    //Make sure the ball and teammates are assigned
-                    InitializeBall();
-                    InitializeTeammates();
-
-                    if (ball == null) Debug.LogWarning("Ball not assigned");
-                    if (teammates == null || teammates.Count == 0) Debug.LogWarning("Teammates not assigned");
-
-                    //memorySensor.InitializeMemoryBasedSensor(this, ball, teammates);
-                    memorySensor.InitializeSensor(this, ball, teammates);
-                    Debug.Log("MemoryBased Sensor attached");
-                    break;
+                InitializeBall();
+                InitializeTeammates();
+                sensor.InitializeSensor(this, ball, teammates);
+                activeSensors.Add(sensor);
+                Debug.Log($"{sensorType} Sensor attached");
             }
+        }
+    }
+
+    private ISoccerSensor CreateSensor(SensorType sensorType)
+    {
+        switch (sensorType)
+        {
+            case SensorType.VisionCone:
+                var visionSensor = gameObject.GetComponent<VisionCone>() ?? gameObject.AddComponent<VisionCone>();
+                visionSensor.SetVisionPattern(VisionCone.VisionPattern.Scanning);
+                return visionSensor;
+
+            case SensorType.MemoryBasedSensor:
+                return gameObject.GetComponent<MemoryBasedSensor>() ?? gameObject.AddComponent<MemoryBasedSensor>();
+
+            case SensorType.SoundSensor:
+                return gameObject.GetComponent<HearingSensor>() ?? gameObject.AddComponent<HearingSensor>();
+
+            default:
+                Debug.LogWarning($"Unsupported sensor type: {sensorType}");
+                return null;
         }
     }
 }
