@@ -31,7 +31,8 @@ public class MemoryBasedSensor : ISensor
         pastRelativeBallPositions = new Queue<Vector3>(MemorySize);
         pastRelativeTeammatePositions = new Queue<Vector3>(MemorySize);
 
-        InitializeMemory();
+        // InitializeMemory();
+        Reset();
     }
 
     private void InitializeMemory()
