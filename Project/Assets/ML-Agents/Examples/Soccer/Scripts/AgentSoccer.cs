@@ -367,8 +367,8 @@ public class AgentSoccer : Agent
             case SensorType.MemoryBasedSensor:
                 return gameObject.GetComponent<MemoryBasedSensor>() ?? gameObject.AddComponent<MemoryBasedSensor>();
 
-            case SensorType.SoundSensor:
-                return gameObject.GetComponent<HearingSensor>() ?? gameObject.AddComponent<HearingSensor>();
+            // case SensorType.SoundSensor:
+            //     return gameObject.GetComponent<HearingSensor>() ?? gameObject.AddComponent<HearingSensor>();
 
             default:
                 Debug.LogWarning($"Unsupported sensor type: {sensorType}");

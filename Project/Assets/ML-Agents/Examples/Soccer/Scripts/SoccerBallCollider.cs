@@ -2,17 +2,30 @@ using UnityEngine;
 
 public class SoccerBallCollider : MonoBehaviour
 {
-    public GameObject area;
+    public SoccerEnvController area;
+    // public GameObject area
     [HideInInspector]
     public HearingSensor hearingSensor;
+    private float _inRange = 10f;
 
     void Start()
     {
-        hearingSensor = area.GetComponent<HearingSensorComponent>().hearingSensor;
+    }
+
+    void Update() {
+        foreach (var item in area.AgentsList) 
+        {
+            if(Vector3.Distance(gameObject.transform.position, item.Agent.transform.position) < _inRange)
+            {
+                if (item.Agent.GetComponent<HearingSensorComponent>().hearingSensor != null) {
+                    item.Agent.GetComponent<HearingSensorComponent>().hearingSensor.OnTriggerEnter(gameObject);
+                }
+            }
+        }
     }
 
     void OnCollisionEnter(Collision col)
     {
-        hearingSensor.OnTriggerEnter(gameObject);
+        // hearingSensor.OnTriggerEnter(gameObject);
     }
 }
