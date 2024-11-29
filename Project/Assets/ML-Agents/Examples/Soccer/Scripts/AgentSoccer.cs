@@ -58,7 +58,7 @@ public class AgentSoccer : Agent
 
     [SerializeField] private GameObject ball; // Reference to the soccer ball
     [SerializeField] private List<AgentSoccer> teammates; // List of teammate agents
-    private MemoryBasedSensor memorySensor;
+    // private MemoryBasedSensor memorySensor;
 
     void Start()
     {
@@ -246,11 +246,11 @@ public class AgentSoccer : Agent
         }
 
         // Memory-specific rewards only if memory sensor is enabled
-        if (sensors.Contains(SensorType.MemoryBasedSensor) && memorySensor != null)
-        {
-            memorySensor.UpdateMemory();
-            memorySensor.AddMemoryRewards(this);
-        }
+        // if (sensors.Contains(SensorType.MemoryBasedSensor) && memorySensor != null)
+        // {
+        //     memorySensor.UpdateMemory();
+        //     memorySensor.AddMemoryRewards(this);
+        // }
 
         // Move the agent based on actions
         MoveAgent(actionBuffers.DiscreteActions);
@@ -317,7 +317,7 @@ public class AgentSoccer : Agent
         m_PreviousPosition = transform.position;
         m_CumulativeDistance = 0f;
         // Clear the memory at the beginning of each episode
-        if (memorySensor != null) memorySensor.ClearMemory();
+        // if (memorySensor != null) memorySensor.ClearMemory();
     }
 
     private void InitializeBall()
