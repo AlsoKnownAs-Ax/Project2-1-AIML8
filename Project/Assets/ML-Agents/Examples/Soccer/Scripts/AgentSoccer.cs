@@ -28,6 +28,7 @@ public class AgentSoccer : Agent
     }
 
     public Team team;
+    private VisionCone visionCone;
     float m_KickPower;
     float m_BallTouch;
     public Position position;
@@ -39,7 +40,6 @@ public class AgentSoccer : Agent
 
     [Header("Used Sensors")]
     [SerializeField] private List<SensorType> sensors;
-    private List<ISoccerSensor> activeSensors = new List<ISoccerSensor>();
 
     [HideInInspector]
     public Rigidbody agentRb;
@@ -58,6 +58,7 @@ public class AgentSoccer : Agent
 
     [SerializeField] private GameObject ball; // Reference to the soccer ball
     [SerializeField] private List<AgentSoccer> teammates; // List of teammate agents
+    private MemoryBasedSensor memorySensor;
 
     void Start()
     {
@@ -121,6 +122,45 @@ public class AgentSoccer : Agent
 
         //AttachSensors(sensors);
     }
+
+    //Redundant code
+    // private void HandleDetectedObject(GameObject obj)
+    // {
+    //     if (obj.CompareTag("ball"))
+    //     {
+    //         Debug.Log("Ball detected in hearing range");
+    //         AddReward(0.1f); // Reward for detecting the ball
+    //     }
+    //     else if (obj.CompareTag("Player"))
+    //     {
+    //         Debug.Log("Player detected in hearing range");
+
+    //         AddReward(0.05f);
+    //     }
+
+    //     m_PreviousPosition = transform.position;
+    //     m_CumulativeDistance = 0f;
+
+    //     // Find the ball if not assigned
+    //     if (ball == null)
+    //     {
+    //         ball = GameObject.FindGameObjectWithTag("ball");
+    //     }
+
+    //     // Find teammates if not assigned
+    //     if (teammates == null || teammates.Count == 0)
+    //     {
+    //         teammates = new List<AgentSoccer>();
+    //         var allAgents = FindObjectsOfType<AgentSoccer>();
+    //         foreach (var agent in allAgents)
+    //         {
+    //             if (agent != this && agent.team == this.team)
+    //             {
+    //                 teammates.Add(agent);
+    //             }
+    //         }
+    //     }
+    // }
 
     /*
      * Move the agent based on actions
@@ -205,16 +245,10 @@ public class AgentSoccer : Agent
             m_CumulativeDistance = 0f;
         }
 
-        // Update all sensors
-        foreach (var sensor in activeSensors)
+        // Memory-specific rewards only if memory sensor is enabled
+        if (sensors.Contains(SensorType.MemoryBasedSensor) && memorySensor != null)
         {
-            sensor.UpdateSensor();
-        }
-
-        // If you need specific sensor behavior, use type checking
-        var memorySensor = activeSensors.Find(s => s is MemoryBasedSensor) as MemoryBasedSensor;
-        if (memorySensor != null && sensors.Contains(SensorType.MemoryBasedSensor))
-        {
+            memorySensor.UpdateMemory();
             memorySensor.AddMemoryRewards(this);
         }
 
@@ -283,10 +317,7 @@ public class AgentSoccer : Agent
         m_PreviousPosition = transform.position;
         m_CumulativeDistance = 0f;
         // Clear the memory at the beginning of each episode
-        foreach (var sensor in activeSensors)
-        {
-            sensor.Reset();
-        }
+        if (memorySensor != null) memorySensor.ClearMemory();
     }
 
     private void InitializeBall()

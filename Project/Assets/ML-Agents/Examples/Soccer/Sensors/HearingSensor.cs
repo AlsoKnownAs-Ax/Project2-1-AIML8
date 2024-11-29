@@ -2,10 +2,12 @@ using UnityEngine;
 using Unity.MLAgents.Sensors;
 
 public class HearingSensor : ISensor
+public class HearingSensor : ISensor
 {
     private Vector3 lastBallPosition;
     private Vector3 lastPlayerPosition;
 
+    public HearingSensor()
     public HearingSensor()
     {
         Reset();
@@ -21,10 +23,12 @@ public class HearingSensor : ISensor
     public string GetName()
     {
         return "Hearing Sensor";
+        return "Hearing Sensor";
     }
 
     public int[] GetObservationShape()
     {
+        return new int[] { 6 }; // [ballDetected, playerDetected, ballPos.xyz, playerPos.xyz]
         return new int[] { 6 }; // [ballDetected, playerDetected, ballPos.xyz, playerPos.xyz]
     }
 
@@ -43,8 +47,10 @@ public class HearingSensor : ISensor
         writer[index++] = lastPlayerPosition.y;
         writer[index++] = lastPlayerPosition.z;
         return index;
+        return index;
     }
 
+    public void Update() { }
     public void Update() { }
 
     public CompressionSpec GetCompressionSpec()
