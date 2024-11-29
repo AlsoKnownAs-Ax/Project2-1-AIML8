@@ -6,7 +6,7 @@ public class SoccerBallCollider : MonoBehaviour
     // public GameObject area
     [HideInInspector]
     public HearingSensor hearingSensor;
-    private float _inRange = 10f;
+    private float _inRange = 30f;
 
     void Start()
     {
@@ -28,4 +28,11 @@ public class SoccerBallCollider : MonoBehaviour
     {
         // hearingSensor.OnTriggerEnter(gameObject);
     }
+
+//    void OnDrawGizmosSelected()
+//    {
+//        // Draw a yellow sphere at the transform's position
+//        Gizmos.color = Color.yellow;
+//        Gizmos.DrawSphere(transform.position, 4);
+//    }
 }
