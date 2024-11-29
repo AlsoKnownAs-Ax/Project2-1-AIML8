@@ -21,20 +21,7 @@ public class MemoryBasedSensor : ISensor
     private Vector3 previousPosition;
     private float cumulativeDistance;
 
-    // public MemoryBasedSensor(AgentSoccer agent, GameObject ball, List<AgentSoccer> teammates)
-    // {
-    //     this.agent = agent;
-    //     this.ball = ball;
-    //     this.teammates = teammates;
-
-    //     pastPositions = new Queue<Vector3>(MemorySize);
-    //     pastRelativeBallPositions = new Queue<Vector3>(MemorySize);
-    //     pastRelativeTeammatePositions = new Queue<Vector3>(MemorySize);
-
-    //     InitializeMemory();
-    // }
-
-    public void InitializeSensor(AgentSoccer agent, GameObject ball, List<AgentSoccer> teammates)
+    public MemoryBasedSensor(AgentSoccer agent, GameObject ball, List<AgentSoccer> teammates)
     {
         this.agent = agent;
         this.ball = ball;
