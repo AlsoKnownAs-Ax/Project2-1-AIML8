@@ -5,14 +5,29 @@ using Unity.MLAgents.Sensors;
 public class VisionCone : MonoBehaviour, ISensor, ISoccerSensor
 {
     [Header("Vision Settings")]
-    [SerializeField] private float viewRadius = 10f;
-    [SerializeField] private float viewAngle = 90f;
+    [SerializeField] 
+    [Range(5f, 20f)]
+    [Tooltip("How far the agent can see")]
+    public float viewRadius = 10f;
+
+    [SerializeField] 
+    [Range(30f, 180f)]
+    [Tooltip("Field of view angle")]
+    public float viewAngle = 90f;
+
     [SerializeField] private LayerMask targetMask;
     [SerializeField] private LayerMask obstacleMask;
 
     [Header("Movement Settings")]
-    [SerializeField] private float maxRotationSpeed = 180f; // degrees per second
-    [SerializeField] private float maxAngleChange = 45f;
+    [SerializeField] 
+    [Range(90f, 360f)]
+    [Tooltip("How fast the vision cone rotates")]
+    public float maxRotationSpeed = 180f;
+
+    [SerializeField] 
+    [Range(15f, 90f)]
+    [Tooltip("Maximum angle the vision can turn")]
+    public float maxAngleChange = 45f;
 
     [Header("Debug Settings")]
     [SerializeField] private bool debugMode = false;
@@ -132,6 +147,12 @@ public class VisionCone : MonoBehaviour, ISensor, ISoccerSensor
     public ObservationSpec GetObservationSpec()
     {
         return ObservationSpec.Vector(4);
+    }
+
+    public void SetVisionParameters(float radius, float angle)
+    {
+        viewRadius = radius;
+        viewAngle = angle;
     }
 
     private IEnumerator ScanningPattern()

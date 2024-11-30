@@ -5,10 +5,15 @@ using Unity.MLAgents.Sensors;
 public class MemoryBasedSensor : MonoBehaviour, ISensor, ISoccerSensor
 {
     [Header("Memory Settings")]
+    [SerializeField] 
+    [Range(5, 20)]
+    [Tooltip("Number of past positions to remember")]
+    public int memorySize = 10;
 
-    [SerializeField] private int MemorySize = 10;
-    //private const float k_DistanceRewardThreshold = 10f;
-    private const float k_DistanceReward = 0.1f;
+    [SerializeField]
+    [Range(0.001f, 0.1f)]
+    [Tooltip("Reward multiplier for memory-based actions")]
+    public float rewardMultiplier = 0.01f;
 
     private AgentSoccer agent;
     private GameObject ball;
@@ -21,42 +26,54 @@ public class MemoryBasedSensor : MonoBehaviour, ISensor, ISoccerSensor
     private Vector3 previousPosition;
     private float cumulativeDistance;
 
-    // public MemoryBasedSensor(AgentSoccer agent, GameObject ball, List<AgentSoccer> teammates)
-    // {
-    //     this.agent = agent;
-    //     this.ball = ball;
-    //     this.teammates = teammates;
-
-    //     pastPositions = new Queue<Vector3>(MemorySize);
-    //     pastRelativeBallPositions = new Queue<Vector3>(MemorySize);
-    //     pastRelativeTeammatePositions = new Queue<Vector3>(MemorySize);
-
-    //     InitializeMemory();
-    // }
-
     public void InitializeSensor(AgentSoccer agent, GameObject ball, List<AgentSoccer> teammates)
     {
         this.agent = agent;
         this.ball = ball;
         this.teammates = teammates;
 
-        pastPositions = new Queue<Vector3>(MemorySize);
-        pastRelativeBallPositions = new Queue<Vector3>(MemorySize);
-        pastRelativeTeammatePositions = new Queue<Vector3>(MemorySize);
+        pastPositions = new Queue<Vector3>(memorySize);
+        pastRelativeBallPositions = new Queue<Vector3>(memorySize);
+        pastRelativeTeammatePositions = new Queue<Vector3>(memorySize);
 
         InitializeMemory();
     }
 
     private void InitializeMemory()
     {
+        if (agent == null) return;
+
         previousPosition = agent.transform.position;
         cumulativeDistance = 0f;
 
-        for (int i = 0; i < MemorySize; i++)
+        // Initialize queues with proper capacity
+        pastPositions = new Queue<Vector3>(memorySize);
+        pastRelativeBallPositions = new Queue<Vector3>(memorySize);
+        pastRelativeTeammatePositions = new Queue<Vector3>(memorySize);
+
+        // Clear and fill queues with initial values
+        ClearAndFillQueues();
+    }
+
+    private void ClearAndFillQueues()
+    {
+        // Clear existing entries
+        if (pastPositions != null) pastPositions.Clear();
+        if (pastRelativeBallPositions != null) pastRelativeBallPositions.Clear();
+        if (pastRelativeTeammatePositions != null) pastRelativeTeammatePositions.Clear();
+
+        // Initialize with default values if agent exists
+        if (agent != null)
         {
-            pastPositions.Enqueue(agent.transform.position);
-            pastRelativeBallPositions.Enqueue(ball != null ? agent.transform.position - ball.transform.position : Vector3.zero);
-            pastRelativeTeammatePositions.Enqueue(Vector3.zero);
+            Vector3 agentPos = agent.transform.position;
+            Vector3 ballRelativePos = ball != null ? agent.transform.position - ball.transform.position : Vector3.zero;
+
+            for (int i = 0; i < memorySize; i++)
+            {
+                pastPositions.Enqueue(agentPos);
+                pastRelativeBallPositions.Enqueue(ballRelativePos);
+                pastRelativeTeammatePositions.Enqueue(Vector3.zero);
+            }
         }
     }
 
@@ -66,7 +83,7 @@ public class MemoryBasedSensor : MonoBehaviour, ISensor, ISoccerSensor
         cumulativeDistance += distanceMoved;
         previousPosition = agent.transform.position;
 
-        if (pastPositions.Count >= MemorySize)
+        if (pastPositions.Count >= memorySize)
         {
             pastPositions.Dequeue();
             pastRelativeBallPositions.Dequeue();
@@ -92,42 +109,31 @@ public class MemoryBasedSensor : MonoBehaviour, ISensor, ISoccerSensor
 
         pastRelativeBallPositions.Enqueue(relativeBallPosition);
         pastRelativeTeammatePositions.Enqueue(relativeTeammatePosition);
-
-        // Debug.Log($"Agent Position: {agent.transform.position}");
-        // Debug.Log($"Relative Ball Position: {relativeBallPosition}");
-        // Debug.Log($"Relative Teammate Position: {relativeTeammatePosition}");
     }
 
     public void AddMemoryRewards(AgentSoccer agent)
     {
-       /* if (cumulativeDistance >= k_DistanceRewardThreshold)
-        {
-            agent.AddReward(k_DistanceReward);
-            cumulativeDistance = 0f;
-        }*/
-
         foreach (var pastPosition in pastPositions)
         {
-            agent.AddReward(Vector3.Distance(agent.transform.position, pastPosition) * 0.01f);
+            agent.AddReward(Vector3.Distance(agent.transform.position, pastPosition) * rewardMultiplier);
         }
 
         foreach (var pastRelativeBallPosition in pastRelativeBallPositions)
         {
-            agent.AddReward(Vector3.Distance(agent.transform.position - ball.transform.position, pastRelativeBallPosition) * 0.01f);
+            agent.AddReward(Vector3.Distance(agent.transform.position - ball.transform.position, pastRelativeBallPosition) * rewardMultiplier);
         }
 
         foreach (var pastRelativeTeammatePosition in pastRelativeTeammatePositions)
         {
-            agent.AddReward(Vector3.Distance(agent.transform.position - pastRelativeTeammatePosition, pastRelativeTeammatePosition) * 0.01f);
+            agent.AddReward(Vector3.Distance(agent.transform.position - pastRelativeTeammatePosition, pastRelativeTeammatePosition) * rewardMultiplier);
         }
-
     }
 
     public void ClearMemory()
     {
-        pastPositions.Clear();
-        pastRelativeBallPositions.Clear();
-        pastRelativeTeammatePositions.Clear();
+        if (pastPositions != null) pastPositions.Clear();
+        if (pastRelativeBallPositions != null) pastRelativeBallPositions.Clear();
+        if (pastRelativeTeammatePositions != null) pastRelativeTeammatePositions.Clear();
     }
 
     public void UpdateSensor()
@@ -137,8 +143,14 @@ public class MemoryBasedSensor : MonoBehaviour, ISensor, ISoccerSensor
 
     public void Reset()
     {
-        ClearMemory();
-        InitializeMemory();
+        if (pastPositions == null || pastRelativeBallPositions == null || pastRelativeTeammatePositions == null)
+        {
+            InitializeMemory();
+        }
+        else
+        {
+            ClearAndFillQueues();
+        }
     }
 
     // ISensor Implementation
@@ -149,7 +161,7 @@ public class MemoryBasedSensor : MonoBehaviour, ISensor, ISoccerSensor
 
     public int[] GetObservationShape()
     {
-        return new int[] { MemorySize * 3 * 3 }; // 3 vectors (position, ball, teammate) * 3 components (x,y,z) per memory entry
+        return new int[] { memorySize * 3 * 3 }; // 3 vectors (position, ball, teammate) * 3 components (x,y,z) per memory entry
     }
 
     public byte[] GetCompressedObservation()
@@ -159,7 +171,23 @@ public class MemoryBasedSensor : MonoBehaviour, ISensor, ISoccerSensor
 
     public int Write(ObservationWriter writer)
     {
+        if (pastPositions == null || pastRelativeBallPositions == null || pastRelativeTeammatePositions == null || agent == null)
+        {
+            // Return zero observations if not properly initialized
+            for (int i = 0; i < memorySize * 3 * 3; i++)
+            {
+                writer[i] = 0f;
+            }
+            return memorySize * 3 * 3;
+        }
+
         int index = 0;
+
+        if (pastPositions == null || pastRelativeBallPositions == null || pastRelativeTeammatePositions == null)
+        {
+            InitializeMemory();
+        }
+
         foreach (var position in pastPositions)
         {
             writer[index++] = position.x;
@@ -181,7 +209,13 @@ public class MemoryBasedSensor : MonoBehaviour, ISensor, ISoccerSensor
             writer[index++] = teammatePos.z;
         }
 
-        return MemorySize * 3 * 3;
+        return memorySize * 3 * 3;
+    }
+
+    // Remove OnEnable since we'll initialize through InitializeSensor
+    private void OnEnable()
+    {
+        // Leave empty - initialization will happen through InitializeSensor
     }
 
     public void Update() { }
@@ -198,6 +232,6 @@ public class MemoryBasedSensor : MonoBehaviour, ISensor, ISoccerSensor
 
     public ObservationSpec GetObservationSpec()
     {
-        return ObservationSpec.Vector(MemorySize * 3 * 3);
+        return ObservationSpec.Vector(memorySize * 3 * 3);
     }
 }

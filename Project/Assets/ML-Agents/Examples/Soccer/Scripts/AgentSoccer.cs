@@ -12,9 +12,9 @@ public enum Team
 
 public enum SensorType
 {
-    VisionCone,
-    MemoryBasedSensor,
-    SoundSensor
+    VisionCone = 1,
+    MemoryBasedSensor = 2,
+    SoundSensor = 4
 }
 
 public class AgentSoccer : Agent
@@ -37,8 +37,11 @@ public class AgentSoccer : Agent
     float m_LateralSpeed; // Speed for lateral movement
     float m_ForwardSpeed; // Speed for forward movement
 
-    [Header("Used Sensors")]
-    [SerializeField] private List<SensorType> sensors;
+    [Header("Sensor Configuration")]
+    [SerializeField]
+    [EnumFlags] // Add this attribute
+    private SensorType selectedSensors;  // Change from List<SensorType> to SensorType
+
     private List<ISoccerSensor> activeSensors = new List<ISoccerSensor>();
 
     [HideInInspector]
@@ -58,6 +61,12 @@ public class AgentSoccer : Agent
 
     [SerializeField] private GameObject ball; // Reference to the soccer ball
     [SerializeField] private List<AgentSoccer> teammates; // List of teammate agents
+
+    [Header("Sensor Settings")]
+    public float visionConeAngle = 90f;
+    public float visionConeRadius = 10f;
+    public int memorySize = 10;
+    public float hearingRadius = 30f;
 
     void Start()
     {
@@ -119,7 +128,7 @@ public class AgentSoccer : Agent
 
         m_ResetParams = Academy.Instance.EnvironmentParameters;
 
-        AttachSensors(sensors);
+        AttachSensors();
     }
 
     /*
@@ -213,7 +222,7 @@ public class AgentSoccer : Agent
 
         // If you need specific sensor behavior, use type checking
         var memorySensor = activeSensors.Find(s => s is MemoryBasedSensor) as MemoryBasedSensor;
-        if (memorySensor != null && sensors.Contains(SensorType.MemoryBasedSensor))
+        if (memorySensor != null && selectedSensors.HasFlag(SensorType.MemoryBasedSensor))  // Fixed this line
         {
             memorySensor.AddMemoryRewards(this);
         }
@@ -339,18 +348,22 @@ public class AgentSoccer : Agent
 
     }
 
-    private void AttachSensors(List<SensorType> selectedSensors)
+    private void AttachSensors()
     {
-        foreach (var sensorType in selectedSensors)
+        // Convert enum flags to individual sensor types
+        foreach (SensorType sensorType in System.Enum.GetValues(typeof(SensorType)))
         {
-            ISoccerSensor sensor = CreateSensor(sensorType);
-            if (sensor != null)
+            if (selectedSensors.HasFlag(sensorType))
             {
-                InitializeBall();
-                InitializeTeammates();
-                sensor.InitializeSensor(this, ball, teammates);
-                activeSensors.Add(sensor);
-                Debug.Log($"{sensorType} Sensor attached");
+                ISoccerSensor sensor = CreateSensor(sensorType);
+                if (sensor != null)
+                {
+                    InitializeBall();
+                    InitializeTeammates();
+                    sensor.InitializeSensor(this, ball, teammates);
+                    activeSensors.Add(sensor);
+                    Debug.Log($"{sensorType} Sensor attached");
+                }
             }
         }
     }
@@ -360,19 +373,67 @@ public class AgentSoccer : Agent
         switch (sensorType)
         {
             case SensorType.VisionCone:
-                var visionSensor = gameObject.GetComponent<VisionCone>() ?? gameObject.AddComponent<VisionCone>();
-                visionSensor.SetVisionPattern(VisionCone.VisionPattern.Scanning);
+                var visionComponent = gameObject.AddComponent<VisionConeComponent>();
+                var visionSensor = gameObject.GetComponent<VisionCone>();
+                if (visionSensor != null)
+                {
+                    visionSensor.viewAngle = visionConeAngle;
+                    visionSensor.viewRadius = visionConeRadius;
+                    visionSensor.SetVisionPattern(VisionCone.VisionPattern.Scanning);
+                }
                 return visionSensor;
 
             case SensorType.MemoryBasedSensor:
-                return gameObject.GetComponent<MemoryBasedSensor>() ?? gameObject.AddComponent<MemoryBasedSensor>();
+                var memoryComponent = gameObject.AddComponent<MemorySensorComponent>();
+                var memorySensor = gameObject.GetComponent<MemoryBasedSensor>();
+                if (memorySensor != null)
+                {
+                    memorySensor.memorySize = memorySize;
+                }
+                return memorySensor;
 
-            // case SensorType.SoundSensor:
-            //     return gameObject.GetComponent<HearingSensor>() ?? gameObject.AddComponent<HearingSensor>();
+            case SensorType.SoundSensor:
+                var hearingComponent = gameObject.AddComponent<HearingSensorComponent>();
+                var hearingSensor = gameObject.GetComponent<HearingSensor>();
+                if (hearingSensor != null)
+                {
+                    hearingSensor.hearingRadius = hearingRadius;
+                }
+                return hearingSensor;
 
             default:
                 Debug.LogWarning($"Unsupported sensor type: {sensorType}");
                 return null;
         }
     }
+
+    // Add method to update sensor settings at runtime
+    public void UpdateSensorSettings()
+    {
+        foreach (var sensor in activeSensors)
+        {
+            if (sensor is VisionCone visionSensor)
+            {
+                visionSensor.viewAngle = visionConeAngle;
+                visionSensor.viewRadius = visionConeRadius;
+            }
+            else if (sensor is MemoryBasedSensor memorySensor)
+            {
+                memorySensor.memorySize = memorySize;
+            }
+            else if (sensor is HearingSensor hearingSensor)
+            {
+                hearingSensor.hearingRadius = hearingRadius;
+            }
+        }
+    }
+
+    // Optional: Call this in Update if you want real-time parameter updates
+    private void Update()
+    {
+        UpdateSensorSettings();
+    }
 }
+
+// Add this helper attribute class
+public class EnumFlagsAttribute : PropertyAttribute { }

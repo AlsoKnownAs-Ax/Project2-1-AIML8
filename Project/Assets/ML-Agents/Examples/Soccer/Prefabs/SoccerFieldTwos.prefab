@@ -2309,12 +2309,16 @@ MonoBehaviour:
   MaxStep: 0
   team: 0
   position: 2
-  sensors: 
+  selectedSensors: -1
   agentRb: {fileID: 0}
   initialPos: {x: 0, y: 0, z: 0}
   rotSign: 0
   ball: {fileID: 0}
   teammates: []
+  visionConeAngle: 90
+  visionConeRadius: 10
+  memorySize: 10
+  hearingRadius: 30
 --- !u!114 &114320493772006642
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2597,12 +2601,16 @@ MonoBehaviour:
   MaxStep: 0
   team: 1
   position: 2
-  sensors: 
+  selectedSensors: -1
   agentRb: {fileID: 0}
   initialPos: {x: 0, y: 0, z: 0}
   rotSign: 0
   ball: {fileID: 0}
   teammates: []
+  visionConeAngle: 90
+  visionConeRadius: 10
+  memorySize: 10
+  hearingRadius: 30
 --- !u!114 &114516244030127556
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4756,12 +4764,16 @@ MonoBehaviour:
   MaxStep: 0
   team: 0
   position: 2
-  sensors: 
+  selectedSensors: -1
   agentRb: {fileID: 0}
   initialPos: {x: 0, y: 0, z: 0}
   rotSign: 0
   ball: {fileID: 0}
   teammates: []
+  visionConeAngle: 90
+  visionConeRadius: 10
+  memorySize: 10
+  hearingRadius: 30
 --- !u!114 &1023485123796557062
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5399,12 +5411,16 @@ MonoBehaviour:
   MaxStep: 0
   team: 1
   position: 2
-  sensors: 
+  selectedSensors: -1
   agentRb: {fileID: 0}
   initialPos: {x: 0, y: 0, z: 0}
   rotSign: 0
   ball: {fileID: 0}
   teammates: []
+  visionConeAngle: 90
+  visionConeRadius: 10
+  memorySize: 10
+  hearingRadius: 30
 --- !u!114 &2562571719799803906
 MonoBehaviour:
   m_ObjectHideFlags: 0

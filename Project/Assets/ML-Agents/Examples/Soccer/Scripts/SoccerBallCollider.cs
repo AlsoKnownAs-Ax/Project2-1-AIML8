@@ -3,7 +3,6 @@ using UnityEngine;
 public class SoccerBallCollider : MonoBehaviour
 {
     public SoccerEnvController area;
-    // public GameObject area
     [HideInInspector]
     public HearingSensor hearingSensor;
     private float _inRange = 30f;
@@ -12,27 +11,23 @@ public class SoccerBallCollider : MonoBehaviour
     {
     }
 
-    void Update() {
+    void Update() 
+    {
         foreach (var item in area.AgentsList) 
         {
             if(Vector3.Distance(gameObject.transform.position, item.Agent.transform.position) < _inRange)
             {
-                if (item.Agent.GetComponent<HearingSensorComponent>().hearingSensor != null) {
-                    item.Agent.GetComponent<HearingSensorComponent>().hearingSensor.OnTriggerEnter(gameObject);
+                var hearingSensorComponent = item.Agent.GetComponent<HearingSensorComponent>();
+                if (hearingSensorComponent?.hearingSensor != null) 
+                {
+                    // Get the ball's collider component
+                    var ballCollider = GetComponent<Collider>();
+                    if (ballCollider != null)
+                    {
+                        hearingSensorComponent.hearingSensor.OnTriggerEnter(ballCollider);
+                    }
                 }
             }
         }
     }
-
-    void OnCollisionEnter(Collision col)
-    {
-        // hearingSensor.OnTriggerEnter(gameObject);
-    }
-
-//    void OnDrawGizmosSelected()
-//    {
-//        // Draw a yellow sphere at the transform's position
-//        Gizmos.color = Color.yellow;
-//        Gizmos.DrawSphere(transform.position, 4);
-//    }
 }
