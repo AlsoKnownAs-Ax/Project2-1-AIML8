@@ -14,13 +14,6 @@ public class HearingSensor : ISensor
     public void Reset()
     {
         lastBallPosition = Vector3.zero;
-        lastPlayerPosition = Vector3.zero;
-    }
-
-    // ISensor Implementation
-    public string GetName()
-    {
-        return "Hearing Sensor";
     }
 
     public int[] GetObservationShape()
@@ -40,9 +33,6 @@ public class HearingSensor : ISensor
         writer[index++] = lastBallPosition.x;
         writer[index++] = lastBallPosition.y;
         writer[index++] = lastBallPosition.z;
-        // writer[index++] = lastPlayerPosition.x;
-        // writer[index++] = lastPlayerPosition.y;
-        // writer[index++] = lastPlayerPosition.z;
         return index;
     }
 
@@ -55,7 +45,7 @@ public class HearingSensor : ISensor
 
     public ObservationSpec GetObservationSpec()
     {
-        return ObservationSpec.Vector(8);
+        return ObservationSpec.Vector(3);
     }
 
     public void OnTriggerEnter(GameObject other)

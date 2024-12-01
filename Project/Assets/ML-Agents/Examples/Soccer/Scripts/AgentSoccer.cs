@@ -194,16 +194,6 @@ public class AgentSoccer : Agent
         }
 
         // Calculate distance moved and update cumulative distance - basic movement reward
-        float distanceMoved = Vector3.Distance(transform.position, m_PreviousPosition);
-        m_CumulativeDistance += distanceMoved;
-        m_PreviousPosition = transform.position;
-
-        // Basic distance reward that applies to all agents
-        if (m_CumulativeDistance >= k_DistanceRewardThreshold)
-        {
-            AddReward(k_DistanceReward);
-            m_CumulativeDistance = 0f;
-        }
 
         // Update all sensors
         foreach (var sensor in activeSensors)
