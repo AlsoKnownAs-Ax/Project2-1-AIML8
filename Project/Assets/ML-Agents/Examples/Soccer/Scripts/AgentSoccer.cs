@@ -63,10 +63,10 @@ public class AgentSoccer : Agent
     [SerializeField] private List<AgentSoccer> teammates; // List of teammate agents
 
     [Header("Sensor Settings")]
-    public float visionConeAngle = 90f;
-    public float visionConeRadius = 10f;
-    public int memorySize = 10;
-    public float hearingRadius = 30f;
+    public float visionConeAngle = 120f; // Increase from 90f
+    public float visionConeRadius = 15f; // Increase from 10f
+    public int memorySize = 15; // Increase from 10
+    public float hearingRadius = 40f; // Increase from 30f
 
     void Start()
     {
@@ -192,77 +192,96 @@ public class AgentSoccer : Agent
      */
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
-        // Base rewards that apply to all agents
+        // Remove existential penalty for strikers
         if (position == Position.Goalie)
         {
             AddReward(m_Existential);
         }
-        else if (position == Position.Striker)
-        {
-            AddReward(-m_Existential);
-        }
+        // else if (position == Position.Striker) -- Remove this penalty
+        // {
+        //     AddReward(-m_Existential);
+        // }
 
-        // Calculate distance moved and update cumulative distance - basic movement reward
+        // Calculate distance moved and update cumulative distance
         float distanceMoved = Vector3.Distance(transform.position, m_PreviousPosition);
         m_CumulativeDistance += distanceMoved;
         m_PreviousPosition = transform.position;
 
-        // Basic distance reward that applies to all agents
+        // Basic distance reward
         if (m_CumulativeDistance >= k_DistanceRewardThreshold)
         {
             AddReward(k_DistanceReward);
             m_CumulativeDistance = 0f;
         }
 
-        // Update all sensors
+        // Update sensors
         foreach (var sensor in activeSensors)
         {
             sensor.UpdateSensor();
         }
 
-        // If you need specific sensor behavior, use type checking
+        // Add memory-based rewards
         var memorySensor = activeSensors.Find(s => s is MemoryBasedSensor) as MemoryBasedSensor;
-        if (memorySensor != null && selectedSensors.HasFlag(SensorType.MemoryBasedSensor))  // Fixed this line
+        if (memorySensor != null && selectedSensors.HasFlag(SensorType.MemoryBasedSensor))
         {
             memorySensor.AddMemoryRewards(this);
+        }
+
+        // Reduce the ball distance penalty
+        if (ball != null)
+        {
+            float distanceToBall = Vector3.Distance(transform.position, ball.transform.position);
+            AddReward(-distanceToBall * 0.01f); // Reduced from 0.02f
+
+            // Add more positive rewards for being close to ball
+            if (distanceToBall < 5f)
+            {
+                AddReward(0.02f); // Positive reward for being near ball
+            }
+            
+            // Get goal positions (adjust these values based on your scene)
+            float ownGoalX = team == Team.Blue ? -15f : 15f;
+            float opponentGoalX = team == Team.Blue ? 15f : -15f;
+            
+            // Penalize being near own goal
+            float distanceToOwnGoal = Mathf.Abs(transform.position.x - ownGoalX);
+            if (distanceToOwnGoal < 5f) // If within 5 units of own goal
+            {
+                AddReward(-0.05f); // Penalty for being near own goal
+            }
+            
+            // Reward for ball moving towards opponent goal
+            if (team == Team.Blue)
+            {
+                AddReward(ball.transform.position.x * 0.01f);
+            }
+            else
+            {
+                AddReward(-ball.transform.position.x * 0.01f);
+            }
+        }
+
+        // Adjust teammate distance penalty
+        if (teammates != null && teammates.Count > 0)
+        {
+            float avgTeammateDistance = 0f;
+            foreach (var teammate in teammates)
+            {
+                avgTeammateDistance += Vector3.Distance(transform.position, teammate.transform.position);
+            }
+            avgTeammateDistance /= teammates.Count;
+            
+            // Only penalize if really far from teammates
+            if (avgTeammateDistance > 15f) // Increased threshold
+            {
+                AddReward(-0.005f * (avgTeammateDistance - 15f)); // Reduced penalty
+            }
         }
 
         // Move the agent based on actions
         MoveAgent(actionBuffers.DiscreteActions);
     }
 
-    /*
-     * Provide heuristic actions for testing
-     * - Allows manual control of the agent using keyboard inputs.
-     */
-    public override void Heuristic(in ActionBuffers actionsOut)
-    {
-        var discreteActionsOut = actionsOut.DiscreteActions;
-        if (Input.GetKey(KeyCode.W))
-        {
-            discreteActionsOut[0] = 1;
-        }
-        if (Input.GetKey(KeyCode.S))
-        {
-            discreteActionsOut[0] = 2;
-        }
-        if (Input.GetKey(KeyCode.A))
-        {
-            discreteActionsOut[2] = 1;
-        }
-        if (Input.GetKey(KeyCode.D))
-        {
-            discreteActionsOut[2] = 2;
-        }
-        if (Input.GetKey(KeyCode.E))
-        {
-            discreteActionsOut[1] = 1;
-        }
-        if (Input.GetKey(KeyCode.Q))
-        {
-            discreteActionsOut[1] = 2;
-        }
-    }
     /// <summary>
     /// Used to provide a "kick" to the ball.
     /// </summary>
@@ -375,30 +394,16 @@ public class AgentSoccer : Agent
             case SensorType.VisionCone:
                 var visionComponent = gameObject.AddComponent<VisionConeComponent>();
                 var visionSensor = gameObject.GetComponent<VisionCone>();
-                if (visionSensor != null)
-                {
-                    visionSensor.viewAngle = visionConeAngle;
-                    visionSensor.viewRadius = visionConeRadius;
-                    visionSensor.SetVisionPattern(VisionCone.VisionPattern.Scanning);
-                }
                 return visionSensor;
 
             case SensorType.MemoryBasedSensor:
                 var memoryComponent = gameObject.AddComponent<MemorySensorComponent>();
                 var memorySensor = gameObject.GetComponent<MemoryBasedSensor>();
-                if (memorySensor != null)
-                {
-                    memorySensor.memorySize = memorySize;
-                }
                 return memorySensor;
 
             case SensorType.SoundSensor:
                 var hearingComponent = gameObject.AddComponent<HearingSensorComponent>();
                 var hearingSensor = gameObject.GetComponent<HearingSensor>();
-                if (hearingSensor != null)
-                {
-                    hearingSensor.hearingRadius = hearingRadius;
-                }
                 return hearingSensor;
 
             default:
@@ -414,16 +419,24 @@ public class AgentSoccer : Agent
         {
             if (sensor is VisionCone visionSensor)
             {
-                visionSensor.viewAngle = visionConeAngle;
-                visionSensor.viewRadius = visionConeRadius;
+                // Only update if values are different
+                if (visionSensor.viewAngle != visionConeAngle)
+                    visionSensor.viewAngle = visionConeAngle;
+                if (visionSensor.viewRadius != visionConeRadius)
+                    visionSensor.viewRadius = visionConeRadius;
             }
             else if (sensor is MemoryBasedSensor memorySensor)
             {
-                memorySensor.memorySize = memorySize;
+                if (memorySensor.memorySize != memorySize)
+                {
+                    memorySensor.memorySize = memorySize;
+                    memorySensor.Reset(); // Reset memory when size changes
+                }
             }
             else if (sensor is HearingSensor hearingSensor)
             {
-                hearingSensor.hearingRadius = hearingRadius;
+                if (hearingSensor.hearingRadius != hearingRadius)
+                    hearingSensor.hearingRadius = hearingRadius;
             }
         }
     }

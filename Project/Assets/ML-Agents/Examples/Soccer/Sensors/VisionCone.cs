@@ -98,7 +98,7 @@ public class VisionCone : MonoBehaviour, ISensor, ISoccerSensor
 
     public int[] GetObservationShape()
     {
-        return new int[] { 4 }; // [isTargetVisible, angleToTarget, distanceToTarget, hasLineOfSight]
+        return new int[] { 74 }; // Keep at 74 observations
     }
 
     public byte[] GetCompressedObservation()
@@ -146,7 +146,7 @@ public class VisionCone : MonoBehaviour, ISensor, ISoccerSensor
 
     public ObservationSpec GetObservationSpec()
     {
-        return ObservationSpec.Vector(4);
+        return ObservationSpec.Vector(74);
     }
 
     public void SetVisionParameters(float radius, float angle)

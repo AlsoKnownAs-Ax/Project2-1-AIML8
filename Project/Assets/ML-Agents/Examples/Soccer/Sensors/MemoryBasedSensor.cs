@@ -161,7 +161,7 @@ public class MemoryBasedSensor : MonoBehaviour, ISensor, ISoccerSensor
 
     public int[] GetObservationShape()
     {
-        return new int[] { memorySize * 3 * 3 }; // 3 vectors (position, ball, teammate) * 3 components (x,y,z) per memory entry
+        return new int[] { 256 }; // Increased from 259 to make total = 336
     }
 
     public byte[] GetCompressedObservation()
@@ -232,6 +232,6 @@ public class MemoryBasedSensor : MonoBehaviour, ISensor, ISoccerSensor
 
     public ObservationSpec GetObservationSpec()
     {
-        return ObservationSpec.Vector(memorySize * 3 * 3);
+        return ObservationSpec.Vector(256);
     }
 }

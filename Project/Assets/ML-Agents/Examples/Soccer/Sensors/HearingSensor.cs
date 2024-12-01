@@ -41,7 +41,7 @@ public class HearingSensor : MonoBehaviour, ISensor, ISoccerSensor
 
     public int[] GetObservationShape()
     {
-        return new int[] { 3 }; // [ballPos.xyz ]
+        return new int[] { 6 }; // Increased from 3
     }
 
     public byte[] GetCompressedObservation()
@@ -52,13 +52,12 @@ public class HearingSensor : MonoBehaviour, ISensor, ISoccerSensor
     public int Write(ObservationWriter writer)
     {
         int index = 0;
-        // Debug.Log(lastBallPosition.x);
         writer[index++] = lastBallPosition.x;
         writer[index++] = lastBallPosition.y;
         writer[index++] = lastBallPosition.z;
-        // writer[index++] = lastPlayerPosition.x;
-        // writer[index++] = lastPlayerPosition.y;
-        // writer[index++] = lastPlayerPosition.z;
+        writer[index++] = lastPlayerPosition.x;
+        writer[index++] = lastPlayerPosition.y;
+        writer[index++] = lastPlayerPosition.z;
         return index;
     }
 
@@ -71,7 +70,7 @@ public class HearingSensor : MonoBehaviour, ISensor, ISoccerSensor
 
     public ObservationSpec GetObservationSpec()
     {
-        return ObservationSpec.Vector(3);  // Changed from 8 to 3 to match GetObservationShape
+        return ObservationSpec.Vector(6);
     }
 
     public void OnTriggerEnter(Collider other)  // Changed from GameObject to Collider
