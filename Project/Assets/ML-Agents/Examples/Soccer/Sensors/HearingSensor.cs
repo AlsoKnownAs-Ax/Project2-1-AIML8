@@ -6,6 +6,9 @@ public class HearingSensor : ISensor
     private Vector3 lastBallPosition;
     private Vector3 lastPlayerPosition;
 
+    private const float MovementThreshold = 0.1f;
+    private const float NoiseFactor = 0.05f;
+
     public HearingSensor()
     {
         Reset();
@@ -14,6 +17,10 @@ public class HearingSensor : ISensor
     public void Reset()
     {
         lastBallPosition = Vector3.zero;
+    }
+
+    public String GetName() {
+        "Hearing Sensor";
     }
 
     public int[] GetObservationShape()
@@ -29,7 +36,7 @@ public class HearingSensor : ISensor
     public int Write(ObservationWriter writer)
     {
         int index = 0;
-        // Debug.Log(lastBallPosition.x);
+        Debug.Log(lastBallPosition.x);
         writer[index++] = lastBallPosition.x;
         writer[index++] = lastBallPosition.y;
         writer[index++] = lastBallPosition.z;
@@ -53,6 +60,19 @@ public class HearingSensor : ISensor
         if (other.CompareTag("ball"))
         {
             lastBallPosition = other.transform.position;
+            //Uncomment this block to apply noise on received ball position and comment the line above
+            // Vector3 currentBallPosition = other.transform.position;
+            // if (Vector3.Distance(lastBallPosition, currentBallPosition) > MovementThreshold)
+            // {
+            //     float distance = Vector3.Distance(currentBallPosition, lastPlayerPosition);
+            //     Vector3 noise = new Vector3(
+            //         Random.Range(-1f, 1f),
+            //         Random.Range(-1f, 1f),
+            //         Random.Range(-1f, 1f)
+            //     ) * NoiseFactor * distance;
+
+            //     lastBallPosition = currentBallPosition + noise;
+            // }
         }
         else if (other.CompareTag("Player"))
         {
