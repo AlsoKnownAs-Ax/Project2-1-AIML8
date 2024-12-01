@@ -6,8 +6,8 @@ public class HearingSensor : ISensor
     private Vector3 lastBallPosition;
     private Vector3 lastPlayerPosition;
 
-    private const float MovementThreshold = 0.1f;
-    private const float NoiseFactor = 0.05f;
+    // private float MovementThreshold = 0.1f;
+    // private float NoiseFactor = 0.05f;
 
     public HearingSensor()
     {
@@ -19,8 +19,8 @@ public class HearingSensor : ISensor
         lastBallPosition = Vector3.zero;
     }
 
-    public String GetName() {
-        "Hearing Sensor";
+    public string GetName() {
+        return "Hearing Sensor";
     }
 
     public int[] GetObservationShape()
