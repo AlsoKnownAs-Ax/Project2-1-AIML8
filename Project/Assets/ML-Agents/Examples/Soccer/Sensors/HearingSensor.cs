@@ -30,12 +30,9 @@ public class HearingSensor : MonoBehaviour, ISensor, ISoccerSensor
     public void Reset()
     {
         lastBallPosition = Vector3.zero;
-        lastPlayerPosition = Vector3.zero;
     }
 
-    // ISensor Implementation
-    public string GetName()
-    {
+    public string GetName() {
         return "Hearing Sensor";
     }
 
@@ -55,9 +52,6 @@ public class HearingSensor : MonoBehaviour, ISensor, ISoccerSensor
         writer[index++] = lastBallPosition.x;
         writer[index++] = lastBallPosition.y;
         writer[index++] = lastBallPosition.z;
-        writer[index++] = lastPlayerPosition.x;
-        writer[index++] = lastPlayerPosition.y;
-        writer[index++] = lastPlayerPosition.z;
         return index;
     }
 
@@ -78,6 +72,19 @@ public class HearingSensor : MonoBehaviour, ISensor, ISoccerSensor
         if (other.CompareTag("ball"))
         {
             lastBallPosition = other.transform.position;
+            //Uncomment this block to apply noise on received ball position and comment the line above
+            // Vector3 currentBallPosition = other.transform.position;
+            // if (Vector3.Distance(lastBallPosition, currentBallPosition) > MovementThreshold)
+            // {
+            //     float distance = Vector3.Distance(currentBallPosition, lastPlayerPosition);
+            //     Vector3 noise = new Vector3(
+            //         Random.Range(-1f, 1f),
+            //         Random.Range(-1f, 1f),
+            //         Random.Range(-1f, 1f)
+            //     ) * NoiseFactor * distance;
+
+            //     lastBallPosition = currentBallPosition + noise;
+            // }
         }
         else if (other.CompareTag("Player"))
         {

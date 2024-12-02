@@ -55,7 +55,7 @@ public class AgentSoccer : Agent
     EnvironmentParameters m_ResetParams; // Environment parameters
 
     Vector3 m_PreviousPosition; // Previous position of the agent
-    float m_CumulativeDistance; // Cumulative distance moved
+    // float m_CumulativeDistance; // Cumulative distance moved
     const float k_DistanceRewardThreshold = 10f; // Distance reward threshold
     const float k_DistanceReward = 0.1f; // Distance reward
 
@@ -202,17 +202,7 @@ public class AgentSoccer : Agent
         //     AddReward(-m_Existential);
         // }
 
-        // Calculate distance moved and update cumulative distance
-        float distanceMoved = Vector3.Distance(transform.position, m_PreviousPosition);
-        m_CumulativeDistance += distanceMoved;
-        m_PreviousPosition = transform.position;
-
-        // Basic distance reward
-        if (m_CumulativeDistance >= k_DistanceRewardThreshold)
-        {
-            AddReward(k_DistanceReward);
-            m_CumulativeDistance = 0f;
-        }
+        // Calculate distance moved and update cumulative distance - basic movement reward
 
         // Update sensors
         foreach (var sensor in activeSensors)
@@ -309,7 +299,7 @@ public class AgentSoccer : Agent
     {
         m_BallTouch = m_ResetParams.GetWithDefault("ball_touch", 0);
         m_PreviousPosition = transform.position;
-        m_CumulativeDistance = 0f;
+        // m_CumulativeDistance = 0f;
         // Clear the memory at the beginning of each episode
         foreach (var sensor in activeSensors)
         {

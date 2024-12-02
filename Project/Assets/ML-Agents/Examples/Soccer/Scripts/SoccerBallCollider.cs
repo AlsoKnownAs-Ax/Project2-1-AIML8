@@ -5,7 +5,7 @@ public class SoccerBallCollider : MonoBehaviour
     public SoccerEnvController area;
     [HideInInspector]
     public HearingSensor hearingSensor;
-    private float _inRange = 30f;
+    private float _inRange = 40f;
 
     void Start()
     {
