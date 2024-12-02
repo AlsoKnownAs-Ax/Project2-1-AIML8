@@ -39,7 +39,7 @@ cd results/SoccerTwosRun/SoccerTwos.onnx
 
 The project follows a branching strategy to manage different features and releases:
 
-- **develop**: The main branch containing the stable version of the project.
+- **phase2**: The main branch containing the stable version of the project for phase2
 - **feature/**: Branches for new features.
 - **bugfix/**: Branches for bug fixes.
 
@@ -50,3 +50,11 @@ The project follows a branching strategy to manage different features and releas
   - `MemoryBasedSensor.cs`: Code related to Memory based Sensor.
   - `VisionCone.cs`: Code related to Vision Cone Sensor.
   - `ISoccerSensor.cs`: Interface for the soccer sensors.
+
+# Group Project's trained model:
+
+You can fined the pre-trained group's models here:
+
+```bash
+cd Project/Assets/ML-Agents/Examples/Soccer/TFModels
+```
