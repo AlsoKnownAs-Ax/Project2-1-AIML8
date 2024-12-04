@@ -155,7 +155,7 @@ public class MemoryBasedSensor : MonoBehaviour, ISensor, ISoccerSensor
     /// Adds rewards to the agent based on historical positions.
     /// Rewards are scaled using the rewardMultiplier value.
     /// Formula used: Reward = Distance(current position, past position) * rewardMultiplier.
-    /// Lower distances result in higher rewards, encouraging the agent to maintain consistent positions.
+    /// Higher distances result in higher rewards, as the reward is directly proportional to the distance.
     /// </summary>
     /// <param name="agent">The agent receiving the rewards.</param>
     public void AddMemoryRewards(AgentSoccer agent)
