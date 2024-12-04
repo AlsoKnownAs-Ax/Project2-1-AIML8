@@ -369,8 +369,8 @@ public class AgentSoccer : Agent
                 {
                     InitializeBall();
                     InitializeTeammates();
-                    sensor.InitializeSensor(this, ball, teammates);
-                    activeSensors.Add(sensor);
+                    sensor.InitializeSensor(this, ball, teammates); // Manages sensors using the ISoccerSensor interface.
+                    activeSensors.Add(sensor); // Add sensor to active list
                     Debug.Log($"{sensorType} Sensor attached");
                 }
             }
