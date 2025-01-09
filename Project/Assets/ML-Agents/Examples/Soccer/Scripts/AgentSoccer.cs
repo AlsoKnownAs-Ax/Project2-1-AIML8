@@ -48,6 +48,8 @@ public class AgentSoccer : Agent
 
     EnvironmentParameters m_ResetParams;
 
+    MemoryBasedSensor memoryBasedSensor;
+
     public override void Initialize()
     {
         SoccerEnvController envController = GetComponentInParent<SoccerEnvController>();
@@ -93,6 +95,8 @@ public class AgentSoccer : Agent
         agentRb.maxAngularVelocity = 500;
 
         m_ResetParams = Academy.Instance.EnvironmentParameters;
+
+        memoryBasedSensor = GetComponent<MemoryBasedSensor>();
     }
 
     public void MoveAgent(ActionSegment<int> act)
@@ -212,6 +216,8 @@ public class AgentSoccer : Agent
     public override void OnEpisodeBegin()
     {
         m_BallTouch = m_ResetParams.GetWithDefault("ball_touch", 0);
+        // clear the memory of the agent after goal (reset)
+        memoryBasedSensor.ClearMemory();
     }
 
 }

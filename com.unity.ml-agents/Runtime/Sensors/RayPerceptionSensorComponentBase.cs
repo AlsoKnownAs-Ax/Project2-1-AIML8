@@ -54,10 +54,10 @@ namespace Unity.MLAgents.Sensors
         }
 
         [HideInInspector, SerializeField, FormerlySerializedAs("maxRayDegrees")]
-        [Range(0, 180)]
+        [Range(0, 100)] // Limit the max ray degrees to 130 
         [Tooltip("Cone size for rays. Using 90 degrees will cast rays to the left and right. " +
             "Greater than 90 degrees will go backwards.")]
-        float m_MaxRayDegrees = 70;
+        float m_MaxRayDegrees = 100;
 
         /// <summary>
         /// Cone size for rays. Using 90 degrees will cast rays to the left and right.
