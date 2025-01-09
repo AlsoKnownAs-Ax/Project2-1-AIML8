@@ -365,14 +365,22 @@ public class AgentSoccer : Agent
             if (selectedSensors.HasFlag(sensorType))
             {
                 ISoccerSensor sensor = CreateSensor(sensorType);
-                if (sensor != null)
+
+                // Check if sensor is null and log
+                if (sensor == null)
                 {
-                    InitializeBall();
-                    InitializeTeammates();
-                    sensor.InitializeSensor(this, ball, teammates); // Manages sensors using the ISoccerSensor interface.
-                    activeSensors.Add(sensor); // Add sensor to active list
-                    Debug.Log($"{sensorType} Sensor attached");
+                    Debug.LogWarning($"{sensorType} Sensor is null. Skipping attachment.");
+                    continue; // Skip to the next iteration if the sensor is null
                 }
+
+                Debug.Log($"Creating {sensorType} Sensor succeeded.");
+
+                InitializeBall();
+                InitializeTeammates();
+
+                sensor.InitializeSensor(this, ball, teammates); // Manages sensors using the ISoccerSensor interface.
+                activeSensors.Add(sensor); // Add sensor to active list
+                Debug.Log($"{sensorType} Sensor attached");
             }
         }
     }
@@ -434,6 +442,7 @@ public class AgentSoccer : Agent
     // Optional: Call this in Update if you want real-time parameter updates
     private void Update()
     {
+        // Time.timeScale = 20f;
         UpdateSensorSettings();
     }
 }

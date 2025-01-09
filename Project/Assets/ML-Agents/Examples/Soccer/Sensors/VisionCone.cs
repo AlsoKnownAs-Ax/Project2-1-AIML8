@@ -73,6 +73,10 @@ public class VisionCone : MonoBehaviour, ISensor, ISoccerSensor
 
     public void InitializeSensor(AgentSoccer agent, GameObject ball, System.Collections.Generic.List<AgentSoccer> teammates)
     {
+        Debug.Log("InitializeSensor VisionCone:");
+        Debug.Log($"Ball: {ball.name}"); // Print ball name for clarity
+        Debug.Log($"Agent: {agent.name}"); // Print agent name for clarity
+        Debug.Log($"Teammates ({teammates.Count}):");
         this.agent = agent;
         this.ball = ball;
         this.teammates = teammates;
@@ -109,13 +113,13 @@ public class VisionCone : MonoBehaviour, ISensor, ISoccerSensor
     public int Write(ObservationWriter writer)
     {
         int index = 0;
-        if (ball != null)
+        if (this.ball != null)
         {
-            Vector3 directionToTarget = (ball.transform.position - agent.transform.position).normalized;
+            Vector3 directionToTarget = (this.ball.transform.position - agent.transform.position).normalized;
             float angleToTarget = Vector3.Angle(visionDirection, directionToTarget);
-            float distanceToTarget = Vector3.Distance(agent.transform.position, ball.transform.position);
+            float distanceToTarget = Vector3.Distance(agent.transform.position, this.ball.transform.position);
             bool hasLineOfSight = !Physics.Raycast(agent.transform.position, directionToTarget, distanceToTarget, obstacleMask);
-            bool isVisible = IsTargetVisible(ball.transform.position);
+            bool isVisible = IsTargetVisible(this.ball.transform.position);
 
             writer[index++] = isVisible ? 1f : 0f;
             writer[index++] = angleToTarget / 180f;
