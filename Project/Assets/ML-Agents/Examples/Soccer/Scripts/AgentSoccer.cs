@@ -2,6 +2,7 @@ using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Policies;
+using Unity.MLAgents.Sensors;
 
 public enum Team
 {
@@ -48,7 +49,8 @@ public class AgentSoccer : Agent
 
     EnvironmentParameters m_ResetParams;
 
-    MemoryBasedSensor memoryBasedSensor;
+    private MemoryBasedSensor memoryBasedSensor;
+    private MemorySensorComponent memorySensorComponent;
 
     public override void Initialize()
     {
@@ -96,11 +98,21 @@ public class AgentSoccer : Agent
 
         m_ResetParams = Academy.Instance.EnvironmentParameters;
 
+        Debug.Log($"[AgentSoccer] Initializing agent {gameObject.name} - Team: {team}, Position: {position}");
+        memorySensorComponent = GetComponent<MemorySensorComponent>();
+        if (memorySensorComponent == null)
+        {
+            memorySensorComponent = gameObject.AddComponent<MemorySensorComponent>();
+            Debug.Log($"[AgentSoccer] Added new MemorySensorComponent to {gameObject.name}");
+        }
+
         memoryBasedSensor = GetComponent<MemoryBasedSensor>();
         if (memoryBasedSensor == null)
         {
             memoryBasedSensor = gameObject.AddComponent<MemoryBasedSensor>();
+            Debug.Log($"[AgentSoccer] Added new MemoryBasedSensor to {gameObject.name}");
         }
+        memorySensorComponent.AddSensor(memoryBasedSensor);
     }
 
     public void MoveAgent(ActionSegment<int> act)
@@ -214,6 +226,9 @@ public class AgentSoccer : Agent
             var dir = c.contacts[0].point - transform.position;
             dir = dir.normalized;
             c.gameObject.GetComponent<Rigidbody>().AddForce(dir * force);
+            
+            // Record the kick attempt
+            memoryBasedSensor.RecordAction("kick", true);
         }
     }
 
@@ -225,6 +240,12 @@ public class AgentSoccer : Agent
         {
             memoryBasedSensor.ClearMemory();
         }
+        memorySensorComponent.OnEpisodeBegin();
+    }
+
+    public override void CollectObservations(VectorSensor sensor)
+    {
+        memorySensorComponent.CollectObservations();
     }
 
 }
