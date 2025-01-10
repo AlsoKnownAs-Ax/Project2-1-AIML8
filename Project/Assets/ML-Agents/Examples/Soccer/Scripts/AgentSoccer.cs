@@ -97,6 +97,10 @@ public class AgentSoccer : Agent
         m_ResetParams = Academy.Instance.EnvironmentParameters;
 
         memoryBasedSensor = GetComponent<MemoryBasedSensor>();
+        if (memoryBasedSensor == null)
+        {
+            memoryBasedSensor = gameObject.AddComponent<MemoryBasedSensor>();
+        }
     }
 
     public void MoveAgent(ActionSegment<int> act)
@@ -216,8 +220,11 @@ public class AgentSoccer : Agent
     public override void OnEpisodeBegin()
     {
         m_BallTouch = m_ResetParams.GetWithDefault("ball_touch", 0);
-        // clear the memory of the agent after goal (reset)
-        memoryBasedSensor.ClearMemory();
+        // Add null check before calling ClearMemory
+        if (memoryBasedSensor != null)
+        {
+            memoryBasedSensor.ClearMemory();
+        }
     }
 
 }
