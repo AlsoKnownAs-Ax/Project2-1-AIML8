@@ -53,9 +53,10 @@ public class MemoryBasedSensor : MonoBehaviour, ISoccerSensor
     {
         if (rayPerception != null) 
         {
-            var rayInput = rayPerception.GetRayPerceptionInput();
-            var rayOutput = RayPerceptionSensor.Perceive(rayInput, false);
+            var rayInput = rayPerception.GetRayPerceptionInput(); // Get the ray perception input
+            var rayOutput = RayPerceptionSensor.Perceive(rayInput); // Get the ray perception output (its a list of ray outputs)
 
+<<<<<<< HEAD
             // Enhanced ray hit logging
             int hitCount = rayOutput.RayOutputs.Count(ray => ray.HasHit);
             var hitDetails = new System.Text.StringBuilder();
@@ -74,6 +75,10 @@ public class MemoryBasedSensor : MonoBehaviour, ISoccerSensor
 
             // Store ray observations using a different method name to avoid overload confusion
             StoreRayMemory(rayMemory, rayOutput.RayOutputs);
+=======
+            // Store ray observations
+            StoreMemory(rayMemory, rayOutput.RayOutputs); // Store the ray observations
+>>>>>>> parent of 718892c62 (fix: Resolve Ray Perception and Memory-Based Sensor integration)
 
             // Store current positions if detected by rays
             foreach (var ray in rayOutput.RayOutputs) // Iterate through all rays
@@ -207,20 +212,20 @@ public class MemoryBasedSensor : MonoBehaviour, ISoccerSensor
         memoryQueue.Enqueue(position); // Add the new position
     }
 
-    // Renamed method to avoid overload confusion
-    private void StoreRayMemory(Queue<float[]> memoryQueue, RayPerceptionOutput.RayOutput[] rayOutputs)
+    // Stores the ray observations in memory.
+    private void StoreMemory(Queue<float[]> memoryQueue, List<RayPerceptionOutput.RayOutput> rayOutputs)
     {
-        if (memoryQueue.Count >= maxMemorySize)
+        if (memoryQueue.Count >= maxMemorySize) // Check if the memory queue is full
         {
-            memoryQueue.Dequeue();
+            memoryQueue.Dequeue(); // Remove the oldest ray observations
         }
 
-        float[] rayDistances = new float[rayOutputs.Length];
-        for (int i = 0; i < rayOutputs.Length; i++)
+        float[] rayDistances = new float[rayOutputs.Count]; // Create an array to store the ray distances
+        for (int i = 0; i < rayOutputs.Count; i++) // Iterate through all rays
         {
-            rayDistances[i] = rayOutputs[i].HitFraction;
+            rayDistances[i] = rayOutputs[i].HitFraction; // Store the ray distance
         }
-        memoryQueue.Enqueue(rayDistances);
+        memoryQueue.Enqueue(rayDistances); // Add the new ray observations
     }
 
     // Clear all memory

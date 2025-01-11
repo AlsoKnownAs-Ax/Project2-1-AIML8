@@ -107,12 +107,15 @@ public class AgentSoccer : Agent
         }
 
         memoryBasedSensor = GetComponent<MemoryBasedSensor>();
+<<<<<<< HEAD
         if (memoryBasedSensor == null)
         {
             memoryBasedSensor = gameObject.AddComponent<MemoryBasedSensor>();
             Debug.Log($"[AgentSoccer] Added new MemoryBasedSensor to {gameObject.name}");
         }
         memorySensorComponent.AddSensor(memoryBasedSensor);
+=======
+>>>>>>> parent of 718892c62 (fix: Resolve Ray Perception and Memory-Based Sensor integration)
     }
 
     public void MoveAgent(ActionSegment<int> act)
@@ -235,6 +238,7 @@ public class AgentSoccer : Agent
     public override void OnEpisodeBegin()
     {
         m_BallTouch = m_ResetParams.GetWithDefault("ball_touch", 0);
+<<<<<<< HEAD
         // Add null check before calling ClearMemory
         if (memoryBasedSensor != null)
         {
@@ -246,6 +250,10 @@ public class AgentSoccer : Agent
     public override void CollectObservations(VectorSensor sensor)
     {
         memorySensorComponent.CollectObservations();
+=======
+        // clear the memory of the agent after goal (reset)
+        memoryBasedSensor.ClearMemory();
+>>>>>>> parent of 718892c62 (fix: Resolve Ray Perception and Memory-Based Sensor integration)
     }
 
 }
