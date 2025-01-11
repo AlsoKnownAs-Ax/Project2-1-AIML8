@@ -10,7 +10,13 @@ public class MemoryBasedSensor : MonoBehaviour
     private Queue<Vector3> opponentMemory = new Queue<Vector3>(); // Store the last 10 positions of the opponent
     private Queue<float[]> rayMemory = new Queue<float[]>(); // Store the last 10 ray observations
 
-    private const int maxMemorySize = 10; // Maximum number of positions to store
+    private int maxMemorySize = 10; // Default maximum number of positions to store
+
+    public int MemorySize
+    {
+        get => maxMemorySize;
+        set => maxMemorySize = value;
+    }
 
     private RayPerceptionSensorComponent3D rayPerception; // Ray perception sensor component
 
