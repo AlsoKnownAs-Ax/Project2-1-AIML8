@@ -2,6 +2,7 @@ using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Policies;
+using System.Collections.Generic;
 
 public enum Team
 {
@@ -38,6 +39,8 @@ public class AgentSoccer : Agent
     float m_LateralSpeed;
     float m_ForwardSpeed;
 
+    private static int blueTeamGoals = 0;
+    private static int purpleTeamGoals = 0;
 
     [HideInInspector]
     public Rigidbody agentRb;
@@ -49,6 +52,11 @@ public class AgentSoccer : Agent
     EnvironmentParameters m_ResetParams;
 
     MemoryBasedSensor memoryBasedSensor;
+
+    [Header("Sensor Configuration")]
+    [SerializeField] private bool memoryEnabled = false;
+    [SerializeField] private bool visionEnabled = false;
+    [SerializeField] private bool hearingEnabled = false;
 
     public override void Initialize()
     {
@@ -96,11 +104,7 @@ public class AgentSoccer : Agent
 
         m_ResetParams = Academy.Instance.EnvironmentParameters;
 
-        memoryBasedSensor = GetComponent<MemoryBasedSensor>();
-        if (memoryBasedSensor == null)
-        {
-            memoryBasedSensor = gameObject.AddComponent<MemoryBasedSensor>();
-        }
+        ApplySensorConfiguration();
     }
 
     public void MoveAgent(ActionSegment<int> act)
@@ -151,9 +155,7 @@ public class AgentSoccer : Agent
     }
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
-
     {
-
         if (position == Position.Goalie)
         {
             // Existential bonus for Goalies.
@@ -179,6 +181,7 @@ public class AgentSoccer : Agent
         {
             discreteActionsOut[0] = 2;
         }
+        // Reset goals scored at the beginning of each episode
         //rotate
         if (Input.GetKey(KeyCode.A))
         {
@@ -198,6 +201,7 @@ public class AgentSoccer : Agent
             discreteActionsOut[1] = 2;
         }
     }
+
     /// <summary>
     /// Used to provide a "kick" to the ball.
     /// </summary>
@@ -214,17 +218,128 @@ public class AgentSoccer : Agent
             var dir = c.contacts[0].point - transform.position;
             dir = dir.normalized;
             c.gameObject.GetComponent<Rigidbody>().AddForce(dir * force);
+
+            // Check if a goal is scored
+            if (IsGoalScored(c))
+            {
+                if (team == Team.Blue)
+                {
+                    blueTeamGoals++;
+                }
+                else
+                {
+                    purpleTeamGoals++;
+                }
+                // Debug.Log($"Goal scored! Blue Team: {blueTeamGoals}, Purple Team: {purpleTeamGoals}");
+
+                // Clear memory when a goal is scored
+                if (memoryBasedSensor != null)
+                {
+                    memoryBasedSensor.ClearMemory();
+                }
+            }
         }
+    }
+
+    private bool IsGoalScored(Collision c)
+    {
+        return false;
     }
 
     public override void OnEpisodeBegin()
     {
+        Debug.Log("On Episode Begin");
         m_BallTouch = m_ResetParams.GetWithDefault("ball_touch", 0);
         // Add null check before calling ClearMemory
         if (memoryBasedSensor != null)
         {
             memoryBasedSensor.ClearMemory();
         }
+        // Reset goals scored at the beginning of each episode
+
     }
 
+    // Convenience methods for common combinations
+    public void EnableMemoryOnly()
+    {
+        ConfigureSensors(useMemory: true, useVision: false, useHearing: false);
+    }
+
+    public void EnableMemoryAndVision()
+    {
+        ConfigureSensors(useMemory: true, useVision: true, useHearing: false);
+    }
+
+    public void EnableAllSensors()
+    {
+        ConfigureSensors(useMemory: true, useVision: true, useHearing: true);
+    }
+
+    public void DisableAllSensors()
+    {
+        ConfigureSensors(useMemory: false, useVision: false, useHearing: false);
+    }
+
+    // Add these new methods alongside the other Enable methods
+    public void EnableVisionOnly()
+    {
+        ConfigureSensors(useMemory: false, useVision: true, useHearing: false);
+    }
+
+    public void EnableHearingOnly()
+    {
+        ConfigureSensors(useMemory: false, useVision: false, useHearing: true);
+    }
+
+    // Add these methods to be called from Unity Editor buttons
+    public void ApplySensorConfiguration()
+    {
+        ConfigureSensors(memoryEnabled, visionEnabled, hearingEnabled);
+    }
+
+    private void ConfigureSensors(bool useMemory, bool useVision, bool useHearing)
+    {
+        string agentInfo = $"[Agent: {gameObject.name}, Team: {team}, Position: {position}] ";
+        List<string> activeSensors = new List<string>();
+
+        // Handle Memory Sensor
+        if (useMemory)
+        {
+            if (memoryBasedSensor == null)
+            {
+                memoryBasedSensor = gameObject.AddComponent<MemoryBasedSensor>();
+                activeSensors.Add("Memory");
+            }
+        }
+        else if (memoryBasedSensor != null)
+        {
+            Destroy(memoryBasedSensor);
+            memoryBasedSensor = null;
+        }
+
+        // Handle Vision Sensor
+        if (useVision)
+        {
+            activeSensors.Add("Vision");
+            // Add vision sensor code when implemented
+        }
+
+        // Handle Hearing Sensor
+        if (useHearing)
+        {
+            activeSensors.Add("Hearing");
+            // Add hearing sensor code when implemented
+        }
+
+        // Update the inspector values
+        memoryEnabled = useMemory;
+        visionEnabled = useVision;
+        hearingEnabled = useHearing;
+
+        // Log active sensors
+        string sensorStatus = activeSensors.Count > 0 
+            ? $"Active Sensors: {string.Join(", ", activeSensors)}"
+            : "No active sensors";
+        Debug.Log($"{agentInfo}{sensorStatus}");
+    }
 }

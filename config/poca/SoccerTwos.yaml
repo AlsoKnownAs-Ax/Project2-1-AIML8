@@ -11,6 +11,8 @@ behaviors:
       num_epoch: 3
       learning_rate_schedule: constant
     network_settings:
+      memory:
+        memory_size: 256 
       normalize: false
       hidden_units: 512
       num_layers: 2

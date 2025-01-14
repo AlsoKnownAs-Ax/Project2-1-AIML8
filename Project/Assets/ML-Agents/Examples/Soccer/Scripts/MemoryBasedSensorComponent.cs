@@ -6,7 +6,7 @@ public class MemoryBasedSensorComponent : MonoBehaviour, ISoccerSensor
     private const string SENSOR_NAME = "MemoryBasedSensor";
     
     [SerializeField, Range(1, 20)]
-    private int memorySize = 10;
+    private int memorySize = 15;
 
     private MemoryBasedSensor sensor;
 
