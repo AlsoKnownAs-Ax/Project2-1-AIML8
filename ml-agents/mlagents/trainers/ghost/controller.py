@@ -72,32 +72,21 @@ class GhostController:
         logger.debug(f"Learning team {self._learning_team} swapped on step {step}")
         self._changed_training_team = True
 
-    # Adapted from https://github.com/Unity-Technologies/ml-agents/pull/1975 and
-    # https://metinmediamath.wordpress.com/2013/11/27/how-to-calculate-the-elo-rating-including-example/
-    # ELO calculation
-    # TODO : Generalize this to more than two teams
+
     def compute_elo_rating_changes(self, rating: float, result: float) -> float:
         """
-        Calculates ELO. Given the rating of the learning team and result.  The GhostController
-        queries the other GhostTrainers for the ELO of their agent that is currently being deployed.
-        Note, this could be the current agent or a past snapshot.
+        Calculates ELO using initial rating as base case. Does not modify opponent ratings.
         :param rating: Rating of the learning team.
         :param result: Win, loss, or draw from the perspective of the learning team.
         :return: The change in ELO.
         """
-        opponent_rating: float = 0.0
-        for team_id, trainer in self._ghost_trainers.items():
-            if team_id != self._learning_team:
-                opponent_rating = trainer.get_opponent_elo()
-        r1 = pow(10, rating / 400)
-        r2 = pow(10, opponent_rating / 400)
+    # Get initial rating from any trainer since they all start with same value
+    base_rating = next(iter(self._ghost_trainers.values())).initial_elo
 
-        summed = r1 + r2
-        e1 = r1 / summed
+    r1 = pow(10, rating / 400)
+    r2 = pow(10, base_rating / 400)
 
-        change = result - e1
-        for team_id, trainer in self._ghost_trainers.items():
-            if team_id != self._learning_team:
-                trainer.change_opponent_elo(change)
+    summed = r1 + r2
+    e1 = r1 / summed
 
-        return change
+    return result - e1
