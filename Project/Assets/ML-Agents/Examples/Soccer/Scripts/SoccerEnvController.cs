@@ -100,11 +100,15 @@ public class SoccerEnvController : MonoBehaviour
     {
         if (scoredTeam == Team.Blue)
         {
+            Manager.goalsBlue = Manager.goalsBlue + 1;
+            Debug.Log("Goals blue: " + Manager.goalsBlue);
             m_BlueAgentGroup.AddGroupReward(1 - (float)m_ResetTimer / MaxEnvironmentSteps);
             m_PurpleAgentGroup.AddGroupReward(-1);
         }
         else
         {
+            Manager.goalsPurple = Manager.goalsPurple + 1;
+            Debug.Log("Goals purple: " + Manager.goalsPurple);
             m_PurpleAgentGroup.AddGroupReward(1 - (float)m_ResetTimer / MaxEnvironmentSteps);
             m_BlueAgentGroup.AddGroupReward(-1);
         }
