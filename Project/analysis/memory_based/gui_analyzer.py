@@ -33,36 +33,22 @@ class GraphWindow:
             # Get the directory path where the script is located
             base_path = Path(__file__).parent
 
-            # Load all three datasets using proper paths
-            df_default = pd.read_csv(base_path / f"{csv_type}.csv")
-            df_50m = pd.read_csv(base_path / f"{csv_type}_50.csv")
-            df_20m = pd.read_csv(base_path / f"{csv_type}_20.csv")
+            # Load datasets using proper paths with new naming convention
+            df_d50 = pd.read_csv(base_path / f"{csv_type}_D50.csv")     # DEFAULT 50
+            df_d20 = pd.read_csv(base_path / f"{csv_type}_D20.csv")     # DEFAULT 20
+            df_50m = pd.read_csv(base_path / f"{csv_type}_50.csv")      # Memory 50
+            df_20m = pd.read_csv(base_path / f"{csv_type}_20.csv")      # Memory 20
 
-            # Convert steps to millions for better readability
-            df_default['Step'] = df_default['Step'] / 1000000
-            df_50m['Step'] = df_50m['Step'] / 1000000
-            df_20m['Step'] = df_20m['Step'] / 1000000
-
-            # Apply rolling mean to smooth the curves
-            window_size = 50  # Adjust this value to control smoothness
-            df_default['Value'] = df_default['Value'].rolling(window=window_size, center=True).mean()
-            df_50m['Value'] = df_50m['Value'].rolling(window=window_size, center=True).mean()
-            df_20m['Value'] = df_20m['Value'].rolling(window=window_size, center=True).mean()
-
-            # Plot the smoothed data
-            self.ax.plot(df_default['Step'], df_default['Value'], label='Default', linewidth=2)
-            self.ax.plot(df_50m['Step'], df_50m['Value'], label='50 Million', linewidth=2)
-            self.ax.plot(df_20m['Step'], df_20m['Value'], label='20 Million', linewidth=2)
+            # Plot the data with updated labels
+            self.ax.plot(df_d50['Step'], df_d50['Value'], label='DEFAULT 50', linewidth=2)
+            self.ax.plot(df_d20['Step'], df_d20['Value'], label='DEFAULT 20', linewidth=2)
+            self.ax.plot(df_50m['Step'], df_50m['Value'], label='MEMORY 50', linewidth=2)
+            self.ax.plot(df_20m['Step'], df_20m['Value'], label='MEMORY 20', linewidth=2)
 
             self.ax.set_title(f'{csv_type} Comparison')
             self.ax.set_xlabel('Steps (Million)')
             self.ax.set_ylabel('Value')
             self.ax.legend()
-            self.ax.grid(True, alpha=0.3)
-            
-            # Make the plot look nicer
-            plt.style.use('seaborn')
-            self.fig.tight_layout()
             
             self.canvas.draw()
         except Exception as e:
@@ -111,23 +97,24 @@ class CSVAnalyzerGUI:
         self.stats_frame = ttk.Frame(self.main_frame)
         self.stats_frame.grid(row=1, column=1, padx=5)
 
-        # Create buttons
-        ttk.Button(self.button_frame, text="DEFAULT", command=lambda: self.load_data("default")).grid(row=0, column=0, padx=5)
-        ttk.Button(self.button_frame, text="50 MILLION", command=lambda: self.load_data("50m")).grid(row=0, column=1, padx=5)
-        ttk.Button(self.button_frame, text="20 MILLION", command=lambda: self.load_data("20m")).grid(row=0, column=2, padx=5)
-        ttk.Button(self.button_frame, text="Return", command=self.clear_display).grid(row=0, column=3, padx=5)
-        ttk.Button(self.button_frame, text="Exit", command=root.quit).grid(row=0, column=4, padx=5)
+        # Create buttons with new labels
+        ttk.Button(self.button_frame, text="DEFAULT 50", command=lambda: self.load_data("d50")).grid(row=0, column=0, padx=5)
+        ttk.Button(self.button_frame, text="DEFAULT 20", command=lambda: self.load_data("d20")).grid(row=0, column=1, padx=5)
+        ttk.Button(self.button_frame, text="MEMORY 50", command=lambda: self.load_data("50m")).grid(row=0, column=2, padx=5)
+        ttk.Button(self.button_frame, text="MEMORY 20", command=lambda: self.load_data("20m")).grid(row=0, column=3, padx=5)
+        ttk.Button(self.button_frame, text="Return", command=self.clear_display).grid(row=0, column=4, padx=5)
+        ttk.Button(self.button_frame, text="Exit", command=root.quit).grid(row=0, column=5, padx=5)
 
         # Create dropdown for selecting CSV type
         self.csv_type = tk.StringVar()
         self.csv_types = ["Entropy", "ELO", "Group-Cumulative-Reward", "Policy-Loss", "Value-Loss"]
         self.csv_dropdown = ttk.Combobox(self.button_frame, textvariable=self.csv_type, values=self.csv_types)
-        self.csv_dropdown.grid(row=0, column=5, padx=5)
+        self.csv_dropdown.grid(row=0, column=6, padx=5)
         self.csv_dropdown.set("Select CSV Type")
 
         # Add Compare button
         ttk.Button(self.button_frame, text="Compare Graphs", 
-                  command=self.show_comparison).grid(row=0, column=6, padx=5)
+                  command=self.show_comparison).grid(row=0, column=7, padx=5)
 
         # Create text widgets for displaying data and stats
         self.data_text = tk.Text(self.data_frame, width=70, height=30)
@@ -151,12 +138,16 @@ class CSVAnalyzerGUI:
         self.data_text.delete(1.0, tk.END)
         self.stats_text.delete(1.0, tk.END)
 
-        # Construct file path
+        # Construct file path with new naming convention
         file_suffix = ""
         if version == "50m":
             file_suffix = "_50"
         elif version == "20m":
             file_suffix = "_20"
+        elif version == "d50":
+            file_suffix = "_D50"
+        elif version == "d20":
+            file_suffix = "_D20"
 
         filename = f"{self.csv_type.get()}{file_suffix}.csv"
         file_path = Path(__file__).parent / filename
