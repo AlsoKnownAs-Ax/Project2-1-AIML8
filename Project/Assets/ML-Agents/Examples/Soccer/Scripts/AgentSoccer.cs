@@ -52,6 +52,7 @@ public class AgentSoccer : Agent
     EnvironmentParameters m_ResetParams;
 
     MemoryBasedSensor memoryBasedSensor;
+    HearingSensor hearingSensor;
 
     [Header("Sensor Configuration")]
     [SerializeField] private bool memoryEnabled = false;
@@ -327,8 +328,22 @@ public class AgentSoccer : Agent
         // Handle Hearing Sensor
         if (useHearing)
         {
-            activeSensors.Add("Hearing");
-            // Add hearing sensor code when implemented
+            var hearingSensorComponent = gameObject.GetComponent<HearingSensorComponent>();
+            if (hearingSensorComponent == null)
+            {
+                hearingSensorComponent = gameObject.AddComponent<HearingSensorComponent>();
+                hearingSensor = hearingSensorComponent.hearingSensor;
+                activeSensors.Add("Hearing");
+            }
+        }
+        else
+        {
+            var hearingSensorComponent = gameObject.GetComponent<HearingSensorComponent>();
+            if (hearingSensorComponent != null)
+            {
+                Destroy(hearingSensorComponent);
+                hearingSensor = null;
+            }
         }
 
         // Update the inspector values

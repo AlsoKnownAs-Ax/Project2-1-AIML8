@@ -38,12 +38,14 @@ class GraphWindow:
             df_d20 = pd.read_csv(base_path / f"{csv_type}_D20.csv")     # DEFAULT 20
             df_50m = pd.read_csv(base_path / f"{csv_type}_50.csv")      # Memory 50
             df_20m = pd.read_csv(base_path / f"{csv_type}_20.csv")      # Memory 20
+            df_s100 = pd.read_csv(base_path / f"{csv_type}_S100.csv")   # S100
 
             # Plot the data with updated labels
             self.ax.plot(df_d50['Step'], df_d50['Value'], label='DEFAULT 50', linewidth=2)
             self.ax.plot(df_d20['Step'], df_d20['Value'], label='DEFAULT 20', linewidth=2)
             self.ax.plot(df_50m['Step'], df_50m['Value'], label='MEMORY 50', linewidth=2)
             self.ax.plot(df_20m['Step'], df_20m['Value'], label='MEMORY 20', linewidth=2)
+            self.ax.plot(df_s100['Step'], df_s100['Value'], label='SOUND 20, 50, 100', linewidth=2)
 
             self.ax.set_title(f'{csv_type} Comparison')
             self.ax.set_xlabel('Steps (Million)')
@@ -102,19 +104,20 @@ class CSVAnalyzerGUI:
         ttk.Button(self.button_frame, text="DEFAULT 20", command=lambda: self.load_data("d20")).grid(row=0, column=1, padx=5)
         ttk.Button(self.button_frame, text="MEMORY 50", command=lambda: self.load_data("50m")).grid(row=0, column=2, padx=5)
         ttk.Button(self.button_frame, text="MEMORY 20", command=lambda: self.load_data("20m")).grid(row=0, column=3, padx=5)
-        ttk.Button(self.button_frame, text="Return", command=self.clear_display).grid(row=0, column=4, padx=5)
-        ttk.Button(self.button_frame, text="Exit", command=root.quit).grid(row=0, column=5, padx=5)
+        ttk.Button(self.button_frame, text="SOUND ALL", command=lambda: self.load_data("s100")).grid(row=0, column=4, padx=5)
+        ttk.Button(self.button_frame, text="Return", command=self.clear_display).grid(row=0, column=5, padx=5)
+        ttk.Button(self.button_frame, text="Exit", command=root.quit).grid(row=0, column=6, padx=5)
 
         # Create dropdown for selecting CSV type
         self.csv_type = tk.StringVar()
         self.csv_types = ["Entropy", "ELO", "Group-Cumulative-Reward", "Policy-Loss", "Value-Loss"]
         self.csv_dropdown = ttk.Combobox(self.button_frame, textvariable=self.csv_type, values=self.csv_types)
-        self.csv_dropdown.grid(row=0, column=6, padx=5)
+        self.csv_dropdown.grid(row=0, column=7, padx=5)
         self.csv_dropdown.set("Select CSV Type")
 
         # Add Compare button
         ttk.Button(self.button_frame, text="Compare Graphs", 
-                  command=self.show_comparison).grid(row=0, column=7, padx=5)
+                  command=self.show_comparison).grid(row=0, column=8, padx=5)
 
         # Create text widgets for displaying data and stats
         self.data_text = tk.Text(self.data_frame, width=70, height=30)
@@ -148,6 +151,8 @@ class CSVAnalyzerGUI:
             file_suffix = "_D50"
         elif version == "d20":
             file_suffix = "_D20"
+        elif version == "s100":
+            file_suffix = "_S100"
 
         filename = f"{self.csv_type.get()}{file_suffix}.csv"
         file_path = Path(__file__).parent / filename
@@ -159,13 +164,38 @@ class CSVAnalyzerGUI:
             # Display all rows
             self.data_text.insert(tk.END, df.to_string())
 
-            # Calculate and display statistics
-            stats = df.describe()
-            stats_text = f"\nStatistics for {filename}:\n\n"
-            stats_text += f"Mean: {stats['Value']['mean']:.6f}\n"
-            stats_text += f"Std Dev: {stats['Value']['std']:.6f}\n"
-            stats_text += f"Min: {stats['Value']['min']:.6f}\n"
-            stats_text += f"Max: {stats['Value']['max']:.6f}\n"
+            if version == "s100":
+                # Calculate statistics for different step ranges
+                stats_20m = df[df['Step'] <= 20000000].describe()  # First 20 million steps
+                stats_50m = df[df['Step'] <= 50000000].describe()  # First 50 million steps
+                stats_100m = df.describe()                         # All steps
+                
+                stats_text = f"\nStatistics for {filename}:\n"
+                stats_text += "\nFirst 20 Million Steps:\n"
+                stats_text += f"Mean: {stats_20m['Value']['mean']:.6f}\n"
+                stats_text += f"Std Dev: {stats_20m['Value']['std']:.6f}\n"
+                stats_text += f"Min: {stats_20m['Value']['min']:.6f}\n"
+                stats_text += f"Max: {stats_20m['Value']['max']:.6f}\n"
+                
+                stats_text += "\nFirst 50 Million Steps:\n"
+                stats_text += f"Mean: {stats_50m['Value']['mean']:.6f}\n"
+                stats_text += f"Std Dev: {stats_50m['Value']['std']:.6f}\n"
+                stats_text += f"Min: {stats_50m['Value']['min']:.6f}\n"
+                stats_text += f"Max: {stats_50m['Value']['max']:.6f}\n"
+                
+                stats_text += "\nAll Steps (100 Million):\n"
+                stats_text += f"Mean: {stats_100m['Value']['mean']:.6f}\n"
+                stats_text += f"Std Dev: {stats_100m['Value']['std']:.6f}\n"
+                stats_text += f"Min: {stats_100m['Value']['min']:.6f}\n"
+                stats_text += f"Max: {stats_100m['Value']['max']:.6f}\n"
+            else:
+                # Regular statistics for other versions
+                stats = df.describe()
+                stats_text = f"\nStatistics for {filename}:\n\n"
+                stats_text += f"Mean: {stats['Value']['mean']:.6f}\n"
+                stats_text += f"Std Dev: {stats['Value']['std']:.6f}\n"
+                stats_text += f"Min: {stats['Value']['min']:.6f}\n"
+                stats_text += f"Max: {stats['Value']['max']:.6f}\n"
             
             self.stats_text.insert(tk.END, stats_text)
 
