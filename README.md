@@ -1,60 +1,139 @@
-# AIML-8
+# AIML-8: Experimental Workflow Documentation
 
-## Overview
+## Guidelines for Running Experiments
 
-This project is designed to manage and train agents using Unity`s ML-Agents. It includes modules for adding and training sensors, as well as running the project with different settings.
+### Experiment 1 - Different Hyperparameters
 
-## How to Run the Training
+#### Step 1: Switch to the `experiment-1` Branch
 
-### Components
+Ensure that you are working within the correct branch of the repository. Switch to the `experiment-1` branch before proceeding.
 
-- **Sensors Module**: Contains the code for the new added sensors.
+---
 
-### Adding Sensors
+#### Step 2: Activate the Conda Environment
 
-1. Open Unity's editor
-2. Open a specific Agent by clicking on it and navigating to the AgentSoccer.cs script
-3. Select the wanted sensors from the drop down list
+Activate the designated Conda environment using the Anaconda Prompt.
 
-### Validating Sensors
-
-1. Run the training on using ml-agents training guide
-2. Navigate to your results folder
-   ex:
+**Command:**
 
 ```bash
-cd results/SoccerTwosRun/SoccerTwos.onnx
+conda activate [mlagents_env_name]
 ```
 
-3. Load your .onnx file into [Notron.app](https://netron.app/)
-4. You should see someting like this:
-   ex for 4 active sensors:
-   ![4 Sensor Notron Image](./guide-assets/Notron%204%20sensors.JPG)
+---
 
-### Different Settings for Training
-
-- **Default Settings**: Use the default configuration provided in the `config` folder.
-
-## How We Branched the Project
-
-The project follows a branching strategy to manage different features and releases:
-
-- **phase2**: The main branch containing the stable version of the project for phase2
-- **feature/**: Branches for new features.
-- **bugfix/**: Branches for bug fixes.
-
-## Explanation of the Added Project Structure
-
-- **Sensors Module**: Contains all the sensor-related code.
-  - `HearingSensor.cs`: Code related to Hearing Sensor.
-  - `MemoryBasedSensor.cs`: Code related to Memory based Sensor.
-  - `VisionCone.cs`: Code related to Vision Cone Sensor.
-  - `ISoccerSensor.cs`: Interface for the soccer sensors.
-
-# Group Project's trained model:
-
-You can fined the pre-trained group's models here:
+**Example**:
 
 ```bash
-cd Project/Assets/ML-Agents/Examples/Soccer/TFModels
+conda activate mlagents
 ```
+
+#### Step 3: Navigate to the Project Root Directory
+
+Change the current working directory to the root of the project.
+
+**Command:**
+
+```bash
+cd [Root Project]
+```
+
+---
+
+**Example**:
+
+```bash
+cd C:\Users\pc\Documents\GitHub\Project2-1-AIML8
+```
+
+#### Step 4: Execute the Training Command with the Desired Configuration
+
+Run the training process using the `mlagents-learn` command along with the appropriate configuration file.
+
+**Command:**
+
+```bash
+mlagents-learn config/poca/[Config File Name].yaml --run-id=[run_name]
+```
+
+---
+
+**Example for running Reduced Batch Size**:
+
+```bash
+mlagents-learn config/poca/SoccerTwos_Reduced_Batch_Size.yaml --run-id=Reduced_batch_size
+```
+
+By following these steps, you can ensure the proper execution of Experiment 1 within the AIML-8 project. Make sure to customize the configuration file and run name as needed for specific experiments.
+
+#### Step 5: View TensorBoard Graphs
+
+Run the TensorBoard command to view the graphs in real-time while training.
+
+**Command:**
+
+```bash
+tensorboard --logdir results --port 6006
+```
+
+Open it the [browser](http://localhost:6006)
+
+### Experiment 2 - Different Sensors
+
+#### Step 1: Switch to the `experiment-2` Branch
+
+Ensure that you are working within the correct branch of the repository. Switch to the `experiment-2` branch before proceeding.
+
+---
+
+### Default Setup: Memory Sensor (50M Steps) vs Sound Sensor (50M Steps)
+
+The branch is pre-configured with a default setup. Follow the steps below to run other cases or hit the play button to run the default case.
+
+---
+
+## How to run other cases
+
+### Apply the Following Configuration Steps to All Agents in the Scene:
+
+#### Step 1: Open the Default `SoccerFieldTwos` Scene
+
+Navigate to and open the default `SoccerFieldTwos` scene within the Unity Editor.
+
+---
+
+#### Step 2: Access the `BehaviourParameters` Component
+
+Locate the `BehaviourParameters` component for the desired agent.
+
+---
+
+#### Step 3: Select the Desired Model
+
+Choose the appropriate model from the available options:
+
+**Available Models:**
+
+- `Default_20_SoccerTwos`
+- `Default_50_SoccerTwos`
+- `Memory_20_SoccerTwos`
+- `Memory_50_SoccerTwos`
+- `Sound_50_SoccerTwos`
+
+---
+
+#### Step 4: Modify the `AgentSoccer` Script Component
+
+Access the `AgentSoccer` script component for the agent.
+
+---
+
+#### Step 5: Choose the Appropriate Sensor Configuration
+
+Within the `AgentSoccer` script, select the desired sensor configuration.
+
+**Reference Image:**
+
+![Sensor Configuration](./docs_images/Sensor_configuration.png)
+
+---
