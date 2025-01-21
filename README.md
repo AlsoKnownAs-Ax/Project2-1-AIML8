@@ -20,13 +20,13 @@ Activate the designated Conda environment using the Anaconda Prompt.
 conda activate [mlagents_env_name]
 ```
 
----
-
 **Example**:
 
 ```bash
 conda activate mlagents
 ```
+
+---
 
 #### Step 3: Navigate to the Project Root Directory
 
@@ -38,13 +38,13 @@ Change the current working directory to the root of the project.
 cd [Root Project]
 ```
 
----
-
 **Example**:
 
 ```bash
 cd C:\Users\pc\Documents\GitHub\Project2-1-AIML8
 ```
+
+---
 
 #### Step 4: Execute the Training Command with the Desired Configuration
 
@@ -56,15 +56,13 @@ Run the training process using the `mlagents-learn` command along with the appro
 mlagents-learn config/poca/[Config File Name].yaml --run-id=[run_name]
 ```
 
----
-
 **Example for running Reduced Batch Size**:
 
 ```bash
 mlagents-learn config/poca/SoccerTwos_Reduced_Batch_Size.yaml --run-id=Reduced_batch_size
 ```
 
-By following these steps, you can ensure the proper execution of Experiment 1 within the AIML-8 project. Make sure to customize the configuration file and run name as needed for specific experiments.
+---
 
 #### Step 5: View TensorBoard Graphs
 
@@ -76,7 +74,11 @@ Run the TensorBoard command to view the graphs in real-time while training.
 tensorboard --logdir results --port 6006
 ```
 
-Open it the [browser](http://localhost:6006)
+- Open it the [browser](http://localhost:6006)
+
+---
+
+By following these steps, you can ensure the proper execution of Experiment 1 within the `AIML-8 project`. Make sure to customize the configuration file and run name as needed for specific configurations.
 
 ### Experiment 2 - Different Sensors
 
