@@ -2188,7 +2188,6 @@ GameObject:
   - component: {fileID: 114320493772006642}
   - component: {fileID: 9152743230243588598}
   - component: {fileID: 798330825103180240}
-  - component: {fileID: 4788767703505313696}
   m_Layer: 0
   m_Name: PurpleStriker
   m_TagString: purpleAgent
@@ -2313,7 +2312,6 @@ MonoBehaviour:
   initialPos: {x: 0, y: 0, z: 0}
   rotSign: 0
   memoryEnabled: 0
-  visionEnabled: 0
   hearingEnabled: 1
 --- !u!114 &114320493772006642
 MonoBehaviour:
@@ -2377,18 +2375,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   debugCommandLineOverride: 
---- !u!114 &4788767703505313696
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1095606497496374}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b98d39a14b8454a4ba569d95d3955c2e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1101518129530804
 GameObject:
   m_ObjectHideFlags: 0
@@ -2488,7 +2474,6 @@ GameObject:
   - component: {fileID: 114516244030127556}
   - component: {fileID: 404683423509059512}
   - component: {fileID: 8557426429796011212}
-  - component: {fileID: 7621432925565315885}
   m_Layer: 0
   m_Name: BlueStriker
   m_TagString: blueAgent
@@ -2613,7 +2598,6 @@ MonoBehaviour:
   initialPos: {x: 0, y: 0, z: 0}
   rotSign: 0
   memoryEnabled: 1
-  visionEnabled: 0
   hearingEnabled: 0
 --- !u!114 &114516244030127556
 MonoBehaviour:
@@ -2677,19 +2661,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   debugCommandLineOverride: 
---- !u!114 &7621432925565315885
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1131626411948014}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a1d5c2c82fe7e42499ac6bbb3eb1b2ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  memorySize: 15
 --- !u!1 &1141134673700168
 GameObject:
   m_ObjectHideFlags: 0
@@ -4241,7 +4212,6 @@ GameObject:
   - component: {fileID: 1023485123796557062}
   - component: {fileID: 8734522883866558980}
   - component: {fileID: 6283479335904612434}
-  - component: {fileID: 1425609207974291570}
   m_Layer: 0
   m_Name: PurpleStriker (1)
   m_TagString: purpleAgent
@@ -4366,7 +4336,6 @@ MonoBehaviour:
   initialPos: {x: 0, y: 0, z: 0}
   rotSign: 0
   memoryEnabled: 0
-  visionEnabled: 0
   hearingEnabled: 1
 --- !u!114 &1023485123796557062
 MonoBehaviour:
@@ -4430,18 +4399,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   debugCommandLineOverride: 
---- !u!114 &1425609207974291570
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6257467487437560250}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b98d39a14b8454a4ba569d95d3955c2e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &6442519122303792292
 GameObject:
   m_ObjectHideFlags: 0
@@ -4803,7 +4760,6 @@ GameObject:
   - component: {fileID: 2562571719799803906}
   - component: {fileID: 1018414316889932458}
   - component: {fileID: 6939753220642424022}
-  - component: {fileID: 3684144898972720990}
   m_Layer: 0
   m_Name: BlueStriker (1)
   m_TagString: blueAgent
@@ -4928,7 +4884,6 @@ MonoBehaviour:
   initialPos: {x: 0, y: 0, z: 0}
   rotSign: 0
   memoryEnabled: 1
-  visionEnabled: 0
   hearingEnabled: 0
 --- !u!114 &2562571719799803906
 MonoBehaviour:
@@ -4992,19 +4947,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   debugCommandLineOverride: 
---- !u!114 &3684144898972720990
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8360301818957399454}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a1d5c2c82fe7e42499ac6bbb3eb1b2ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  memorySize: 15
 --- !u!1 &8673569163220857793
 GameObject:
   m_ObjectHideFlags: 0

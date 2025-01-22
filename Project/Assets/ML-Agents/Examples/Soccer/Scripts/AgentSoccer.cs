@@ -54,9 +54,11 @@ public class AgentSoccer : Agent
     MemoryBasedSensor memoryBasedSensor;
     HearingSensor hearingSensor;
 
+    private MemoryBasedSensorComponent memoryBasedSensorComponent;
+    private HearingSensorComponent hearingSensorComponent;
+
     [Header("Sensor Configuration")]
     [SerializeField] private bool memoryEnabled = false;
-    [SerializeField] private bool visionEnabled = false;
     [SerializeField] private bool hearingEnabled = false;
 
     public override void Initialize()
@@ -263,72 +265,55 @@ public class AgentSoccer : Agent
     // Convenience methods for common combinations
     public void EnableMemoryOnly()
     {
-        ConfigureSensors(useMemory: true, useVision: false, useHearing: false);
-    }
-
-    public void EnableMemoryAndVision()
-    {
-        ConfigureSensors(useMemory: true, useVision: true, useHearing: false);
+        ConfigureSensors(useMemory: true, useHearing: false);
     }
 
     public void EnableAllSensors()
     {
-        ConfigureSensors(useMemory: true, useVision: true, useHearing: true);
+        ConfigureSensors(useMemory: true, useHearing: true);
     }
 
     public void DisableAllSensors()
     {
-        ConfigureSensors(useMemory: false, useVision: false, useHearing: false);
-    }
-
-    // Add these new methods alongside the other Enable methods
-    public void EnableVisionOnly()
-    {
-        ConfigureSensors(useMemory: false, useVision: true, useHearing: false);
+        ConfigureSensors(useMemory: false, useHearing: false);
     }
 
     public void EnableHearingOnly()
     {
-        ConfigureSensors(useMemory: false, useVision: false, useHearing: true);
+        ConfigureSensors(useMemory: false, useHearing: true);
     }
 
     // Add these methods to be called from Unity Editor buttons
     public void ApplySensorConfiguration()
     {
-        ConfigureSensors(memoryEnabled, visionEnabled, hearingEnabled);
+        ConfigureSensors(memoryEnabled, hearingEnabled);
     }
 
-    private void ConfigureSensors(bool useMemory, bool useVision, bool useHearing)
+    private void ConfigureSensors(bool useMemory, bool useHearing)
     {
         string agentInfo = $"[Agent: {gameObject.name}, Team: {team}, Position: {position}] ";
         List<string> activeSensors = new List<string>();
 
-        // Handle Memory Sensor
+        // Handle Memory Sensor Component
         if (useMemory)
         {
-            if (memoryBasedSensor == null)
+            if (memoryBasedSensorComponent == null)
             {
-                memoryBasedSensor = gameObject.AddComponent<MemoryBasedSensor>();
+                memoryBasedSensorComponent = gameObject.AddComponent<MemoryBasedSensorComponent>();
+                memoryBasedSensor = memoryBasedSensorComponent.GetComponent<MemoryBasedSensor>();
                 activeSensors.Add("Memory");
             }
         }
-        else if (memoryBasedSensor != null)
+        else if (memoryBasedSensorComponent != null)
         {
-            Destroy(memoryBasedSensor);
+            Destroy(memoryBasedSensorComponent);
+            memoryBasedSensorComponent = null;
             memoryBasedSensor = null;
         }
 
-        // Handle Vision Sensor
-        if (useVision)
-        {
-            activeSensors.Add("Vision");
-            // Add vision sensor code when implemented
-        }
-
-        // Handle Hearing Sensor
+        // Handle Hearing Sensor Component
         if (useHearing)
         {
-            var hearingSensorComponent = gameObject.GetComponent<HearingSensorComponent>();
             if (hearingSensorComponent == null)
             {
                 hearingSensorComponent = gameObject.AddComponent<HearingSensorComponent>();
@@ -336,25 +321,34 @@ public class AgentSoccer : Agent
                 activeSensors.Add("Hearing");
             }
         }
-        else
+        else if (hearingSensorComponent != null)
         {
-            var hearingSensorComponent = gameObject.GetComponent<HearingSensorComponent>();
-            if (hearingSensorComponent != null)
-            {
-                Destroy(hearingSensorComponent);
-                hearingSensor = null;
-            }
+            Destroy(hearingSensorComponent);
+            hearingSensorComponent = null;
+            hearingSensor = null;
         }
 
         // Update the inspector values
         memoryEnabled = useMemory;
-        visionEnabled = useVision;
         hearingEnabled = useHearing;
 
-        // Log active sensors
+        // Log active sensors with team information
         string sensorStatus = activeSensors.Count > 0 
             ? $"Active Sensors: {string.Join(", ", activeSensors)}"
             : "No active sensors";
-        Debug.Log($"{agentInfo}{sensorStatus}");
+        Debug.Log($"{agentInfo}Team: {team}, {sensorStatus}");
+    }
+
+    // Add method to configure sensors based on team
+    public void ConfigureSensorsByTeam()
+    {
+        if (team == Team.Blue)
+        {
+            ConfigureSensors(useMemory: true, useHearing: false);  // Blue team uses memory
+        }
+        else
+        {
+            ConfigureSensors(useMemory: false, useHearing: true);  // Purple team uses hearing
+        }
     }
 }
