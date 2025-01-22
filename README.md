@@ -118,9 +118,13 @@ Choose the appropriate model from the available options:
 
 - `Default_20_SoccerTwos`
 - `Default_50_SoccerTwos`
+- `Default_100_SoccerTwos`
 - `Memory_20_SoccerTwos`
 - `Memory_50_SoccerTwos`
+- `Sound_20_SoccerTwos`
 - `Sound_50_SoccerTwos`
+- `Sound_100_SoccerTwos`
+
 
 ---
 
