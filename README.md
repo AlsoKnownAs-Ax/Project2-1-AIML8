@@ -136,6 +136,6 @@ Within the `AgentSoccer` script, select the desired sensor configuration.
 
 **Reference Image:**
 
-![Sensor Configuration](./docs_images/Sensor_configuration.png)
+![Sensor Configuration](./docs_images/Sensor_configuration.jpg)
 
 ---
