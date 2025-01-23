@@ -3032,7 +3032,7 @@ GameObject:
   - component: {fileID: 135993924486820224}
   - component: {fileID: 114273807544954564}
   - component: {fileID: 54100138833592438}
-  - component: {fileID: 7094690891669589114}
+  - component: {fileID: 2777128467980416058}
   m_Layer: 0
   m_Name: Soccer Ball
   m_TagString: ball
@@ -3171,7 +3171,7 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 4
   m_CollisionDetection: 1
---- !u!114 &7094690891669589114
+--- !u!114 &2777128467980416058
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3180,7 +3180,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1682753582128710}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 708ff701c009f9967a6c16fdba471265, type: 3}
+  m_Script: {fileID: 11500000, guid: 20fb41354f1dfc8e9ae7b9c99ee1d516, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   area: {fileID: 8122248192225965164}
